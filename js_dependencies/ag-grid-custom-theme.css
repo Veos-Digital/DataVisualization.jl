@@ -1,0 +1,15 @@
+.ag-icon-asc::before {
+    content: "▲";
+}
+
+.ag-icon-desc::before {
+    content: "▼";
+}
+
+.ag-sort-ascending-icon {
+    margin-left: auto;
+}
+
+.ag-sort-descending-icon {
+    margin-left: auto;
+}

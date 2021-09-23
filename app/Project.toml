@@ -1,0 +1,8 @@
+[deps]
+AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataVisualization = "de49ba16-8f50-42c0-953a-2dd264fb1ae7"
+JSServe = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+Observables = "510215fc-4207-5dde-b226-833fc4488ee2"
+PalmerPenguins = "8b842266-38fa-440a-9b57-31493939ab85"
