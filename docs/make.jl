@@ -19,4 +19,5 @@ makedocs(;
 deploydocs(;
     repo="github.com/Veos-Digital/DataVisualization.jl",
     push_preview=true,
+    devbranch="main",
 )
