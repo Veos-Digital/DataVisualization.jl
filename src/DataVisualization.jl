@@ -5,6 +5,7 @@ using JSServe
 using JSServe: evaljs, onjs, onload, Table
 import Tables, CSV
 import JSServe: jsrender
+using Sockets
 using StructArrays: uniquesorted, finduniquesorted, components, StructArray
 using Observables: to_value
 using Makie: plot!, RGB, Axis, Scene, Figure, Makie

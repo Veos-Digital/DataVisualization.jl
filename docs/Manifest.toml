@@ -178,7 +178,7 @@ version = "1.0.0"
 
 [[DataVisualization]]
 deps = ["AlgebraOfGraphics", "CSV", "Clustering", "Distances", "GLM", "JSServe", "Makie", "Missings", "MultivariateStats", "Observables", "OrderedCollections", "StatsBase", "StatsModels", "StructArrays", "Tables", "WGLMakie"]
-git-tree-sha1 = "ca9f41f6ecebf821e16417d15518fd7624b462f2"
+git-tree-sha1 = "849196c23dc42bfbfbadc08455fed4950727aab6"
 repo-rev = "pv/docs"
 repo-url = ".."
 uuid = "de49ba16-8f50-42c0-953a-2dd264fb1ae7"
