@@ -12,6 +12,14 @@ makedocs(;
         "Home" => "index.md",
         "Getting Started" => "getting_started.md",
         "API" => "API.md",
+        "Tabs" => [
+            "Load" => "tabs/load.md",
+            "Filter" => "tabs/filter.md",
+            "Predict" => "tabs/predict.md",
+            "Cluster" => "tabs/cluster.md",
+            "Project" => "tabs/project.md",
+            "Visualize" => "tabs/visualize.md",
+        ],
     ],
     strict=true,
 )
