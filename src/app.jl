@@ -65,5 +65,5 @@ Serve the output at the given `url` and `port`.
 Return a `JSServe.Server` object.
 """
 function serve(table, tabs=defaulttabs; url=Sockets.localhost, port=8081)
-    return Server(app(table, tabs), url, port)
+    return Server(app(table, tabs), string(url), port)
 end
