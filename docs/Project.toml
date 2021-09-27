@@ -1,0 +1,3 @@
+[deps]
+DataVisualization = "de49ba16-8f50-42c0-953a-2dd264fb1ae7"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
