@@ -58,7 +58,7 @@ end
 
 """
     serve(table, tabs=(:Load, :Filter, :Predict, :Cluster, :Project, :Visualize);
-           url=Sockets.localhost, port=8081)
+          url=Sockets.localhost, port=8081)
 
 Generate a [`UI`](@ref) with a given `table` and list of `tabs`.
 Serve the output at the given `url` and `port`.

@@ -1,5 +1,8 @@
-## Right hand side
-
 The right hand side of the tab contains a tabular visualization of the dataset.
-Columns can be moved 
-The right hand side of the tab displays the dataset as a table.
+
+The table is interactive. The following user interactions are supported:
+- drag to move or resize columns,
+- click on a column header to toggle ascending or descending sorting,
+- scroll horizontally or vertically to visualize additional rows or columns.
+
+The tabular visualization is powered by [AG Grid](https://www.ag-grid.com/).

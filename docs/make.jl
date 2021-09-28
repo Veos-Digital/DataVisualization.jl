@@ -1,22 +1,20 @@
 using Documenter, DataVisualization
 
-let
-    tabs_dir = joinpath(@__DIR__, "src", "tabs")
-    generated_dir = joinpath(@__DIR__, "src", "generated")
-    components_dir = joinpath(@__DIR__, "src", "components")
-    for fn in readdir(tabs_dir)
-        open(joinpath(generated_dir, fn), "w") do io
-            for line in eachline(joinpath(tabs_dir, fn))
+let dir = joinpath(@__DIR__, "src", "tabs")
+    for fn in readdir(joinpath(dir, "src"))
+        open(joinpath(dir, fn), "w") do io
+            for line in eachline(joinpath(dir, "src", fn), keep=true)
                 m = match(r"{{([a-z]*)}}", line)
                 if isnothing(m)
                     write(io, line)
                 else
                     component = m[1]
-                    path = joinpath(components_dir, m[1] * ".md")
+                    path = joinpath(dir, "components", m[1] * ".md")
                     write(io, read(path))
                 end
             end
         end
+    end
 end
 
 makedocs(;
