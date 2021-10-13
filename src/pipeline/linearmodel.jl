@@ -35,19 +35,21 @@ end
 
 function jsrender(session::Session, lm::LinearModel)
 
-    inputs_wdg = map(session, lm.table) do table
+    wdgs = LittleDict()
+
+    wdgs["Inputs"] = map(session, lm.table) do table
         colnames = collect(map(String, Tables.columnnames(table)))
         options = AutocompleteOptions("" => colnames, "* " => colnames, "+ " => colnames)
         return Autocomplete(Observable(""), options)
     end
 
-    output_wdg = map(session, lm.table) do table
+    wdgs["Output"] = map(session, lm.table) do table
         colnames = collect(map(String, Tables.columnnames(table)))
         options = AutocompleteOptions("" => colnames)
         return Autocomplete(Observable(""), options)
     end
 
-    method_wdg = map(session, lm.table) do table
+    wdgs["Method"] = map(session, lm.table) do table
         options = AutocompleteOptions(
             "noise" => [string(noise) for noise in keys(noises)],
             "link" => [string(link) for link in keys(links)]
@@ -55,11 +57,12 @@ function jsrender(session::Session, lm::LinearModel)
         return Autocomplete(Observable(""), options)
     end
 
-    wdgs = LittleDict(
-        "Inputs" => inputs_wdg,
-        "Output" => output_wdg,
-        "Method" => method_wdg,
-    )
+    default_names = ":prediction :error"
+
+    wdgs["Rename"] = map(session, lm.table) do table
+        options = AutocompleteOptions("" => ["prediction", "error"])
+        return Autocomplete(Observable(default_names), options)
+    end
 
     tryon(session, lm.table) do table
         lm.value[] = table
@@ -84,18 +87,18 @@ function jsrender(session::Session, lm::LinearModel)
         response = Term(responsevariable)
         formula = response ~ predictors
 
-        calls = compute_calls(wdgs["Method"][].value[])
-        for call in calls
-            name = "prediction"
-            distribution, link = Normal(), nothing
-            for (k, v) in call.named
-                k == "noise" && (distribution = noises[Symbol(v)]())
-                k == "link" && (link = links[Symbol(v)]())
-            end
-            model = glm(formula, table, distribution, something(link, canonicallink(distribution)))
-            anres = predict(model, table)
-            result[Symbol(name)] = disallowmissing(anres) # FIXME: support missing data in AoG
+        method_call = only(compute_calls(wdgs["Method"][].value[]))
+        rename_call = only(compute_calls(wdgs["Rename"][].value[]))
+        pred_name, err_name = rename_call.positional
+        distribution, link = Normal(), nothing
+        for (k, v) in method_call.named
+            k == "noise" && (distribution = noises[Symbol(v)]())
+            k == "link" && (link = links[Symbol(v)]())
         end
+        model = glm(formula, table, distribution, something(link, canonicallink(distribution)))
+        anres = disallowmissing(predict(model, table)) # FIXME: support missing data in AoG
+        result[Symbol(pred_name)] = anres
+        result[Symbol(err_name)] = result[responsevariable] - anres
 
         lm.value[] = result
     end
@@ -103,13 +106,14 @@ function jsrender(session::Session, lm::LinearModel)
     tryon(session, clear_button.value) do _
         lm.value[] = lm.table[]
         for wdg in values(wdgs)
-            wdg.value[] = ""
+            wdg[].value[] = ""
         end
+        wdgs["Rename"][].value[] = default_names
     end
 
     widgets = Iterators.map(pairs(wdgs)) do (name, textbox)
         label = DOM.p(class="text-blue-800 text-xl font-semibold p-4 w-full text-left", name)
-        class = name == "Method" ? "" : "mb-4"
+        class = name == foldl((_, k) -> k, keys(wdgs)) ? "" : "mb-4"
         return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
     end
 
