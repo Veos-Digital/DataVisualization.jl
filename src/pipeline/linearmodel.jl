@@ -75,36 +75,20 @@ function jsrender(session::Session, lm::LinearModel)
         # parse textbox value to formula
         responsevariable = nothing
         predictors = ConstantTerm(1)
-        predictor = Symbol[]
-        for chunk in split(wdg1[].value[], ' ')
-            isempty(chunk) && continue
-            pre, post = split(chunk, ':')
-            if pre == "with"
-                push!(predictor, Symbol(post))
-            else
-                predictors += combinations(predictor)
-                predictor = Symbol[]
-                if pre == ""
-                    push!(predictor, Symbol(post))
-                elseif pre == "output"
-                    responsevariable = Symbol(post)
-                end
-            end
+        for call in compute_calls(wdgs["Inputs"][].value[])
+            predictors += combinations(map(Symbol, call.positional))
         end
-        predictors += combinations(predictor)
-        if isnothing(responsevariable)
-            msg = "output not provided"
-            throw(ArgumentError(msg))
-        end
+        output_call = only(compute_calls(wdgs["Output"][].value[]))
+        responsevariable = Symbol(only(output_call.positional))
+
         response = Term(responsevariable)
         formula = response ~ predictors
 
-        calls = compute_calls(wdg2[].value[])
+        calls = compute_calls(wdgs["Method"][].value[])
         for call in calls
-            name = "$(responsevariable)_glm"
+            name = "prediction"
             distribution, link = Normal(), nothing
             for (k, v) in call.named
-                name *= "_$k=$v"
                 k == "noise" && (distribution = noises[Symbol(v)]())
                 k == "link" && (link = links[Symbol(v)]())
             end

@@ -20,7 +20,7 @@ const ANALYSES = (
     smooth=AlgebraOfGraphics.smooth,
 )
 
-const STYLES = (:color, :marker, :markersize, :linestyle, :col, :row, :layout, :side, :dodge)
+const STYLES = (:color, :marker, :markersize, :linestyle, :col, :row, :layout, :side, :dodge, :stack)
 
 struct PlotSpecs
     names::Vector{String}
