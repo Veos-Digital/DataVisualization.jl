@@ -55,10 +55,10 @@ function jsrender(session::Session, cluster::Cluster)
     tryon(session, process_button.value) do _
         local table = cluster.table[]
         result = to_littledict(table)
-        input_call = only(compute_calls(wdgs["Inputs"][].value[]))
-        cols = Tables.getcolumn.(Ref(table), Symbol.(input_call.positional))
+        inputs_call = only(compute_calls(wdgs["Inputs"][].value[]))
+        cols = Tables.getcolumn.(Ref(table), Symbol.(inputs_call.positional))
         X = reduce(vcat, transpose.(cols))
-        kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(table, Symbol(v)), input_call.named)
+        kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(table, Symbol(v)), inputs_call.named)
         D = pairwise(dist, X, dims=2)
 
         method_call = only(compute_calls(wdgs["Method"][].value[]))

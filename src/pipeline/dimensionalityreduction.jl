@@ -29,13 +29,15 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
 
     analysis_names = collect(map(string, keys(dimensionalityreductions)))
 
-    wdg1 = map(session, dimres.table) do table
+    wdgs = LittleDict()
+
+    wdgs["Inputs"] = map(session, dimres.table) do table
         colnames = collect(map(String, Tables.columnnames(table)))
         options = AutocompleteOptions("" => colnames)
         return Autocomplete(Observable(""), options)
     end
 
-    wdg2 = map(session, dimres.table) do table
+    wdgs["Method"] = map(session, dimres.table) do table
         options = AutocompleteOptions("+" => String[])
         for name in analysis_names
             if name in ("mds", "ica")
@@ -45,6 +47,13 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
             end
         end
         return Autocomplete(Observable(""), options)
+    end
+
+    default_names = ":projection"
+
+    wdgs["Rename"] = map(session, dimres.table) do table
+        options = AutocompleteOptions("" => ["projection"])
+        return Autocomplete(Observable(default_names), options)
     end
 
     tryon(session, dimres.table) do table
@@ -57,28 +66,27 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
     tryon(session, process_button.value) do _
         local table = dimres.table[]
         result = to_littledict(table)
-        call = only(compute_calls(wdg1[].value[]))
-        cols = Tables.getcolumn.(Ref(table), Symbol.(call.positional))
+        inputs_call = only(compute_calls(wdgs["Inputs"][].value[]))
+        cols = Tables.getcolumn.(Ref(table), Symbol.(inputs_call.positional))
         X = reduce(vcat, transpose.(cols))
-        kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(table, Symbol(v)), call.named)
-        calls = compute_calls(wdg2[].value[])
+        kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(table, Symbol(v)), inputs_call.named)
+        method_call = only(compute_calls(wdgs["Method"][].value[]))
+        rename_call = only(compute_calls(wdgs["Rename"][].value[]))
 
-        for call in calls
-            name = only(call.fs)
+        name = only(rename_call.positional)
 
-            an = dimensionalityreductions[Symbol(only(call.fs))]
-            positional, named = [], collect(Pair, kws)
-            for (k, v) in call.named
-                if an in (ICA, MDS) && k == "dims"
-                    push!(positional, parse(Int, v))
-                else
-                    push!(named, Symbol(k) => v)
-                end
+        an = dimensionalityreductions[Symbol(only(method_call.fs))]
+        positional, named = [], collect(Pair, kws)
+        for (k, v) in method_call.named
+            if an in (ICA, MDS) && k == "dims"
+                push!(positional, parse(Int, v))
+            else
+                push!(named, Symbol(k) => v)
             end
-            projected_data = project(an, X, positional...; named...)
-            for (i, col) in enumerate(eachrow(projected_data))
-                result[Symbol(join([name, i], '_'))] = col
-            end
+        end
+        projected_data = project(an, X, positional...; named...)
+        for (i, col) in enumerate(eachrow(projected_data))
+            result[Symbol(join([name, i], '_'))] = col
         end
 
         dimres.value[] = result
@@ -86,14 +94,15 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
 
     tryon(session, clear_button.value) do _
         dimres.value[] = dimres.table[]
-        wdg1.value[] = ""
-        wdg2.value[] = ""
+        for wdg in values(wdgs)
+            wdg[].value[] = ""
+        end
+        wdgs["Rename"][].value[] = default_names
     end
 
-    widgets = map(enumerate((wdg1, wdg2))) do (i, textbox)
-        name = i == 1 ? "Attributes" : "Methods"
+    widgets = Iterators.map(pairs(wdgs)) do (name, textbox)
         label = DOM.p(class="text-blue-800 text-xl font-semibold p-4 w-full text-left", name)
-        class = i == 2 ? "" : "mb-4"
+        class = name == foldl((_, k) -> k, keys(wdgs)) ? "" : "mb-4"
         return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
     end
 
