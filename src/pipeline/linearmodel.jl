@@ -39,7 +39,7 @@ function jsrender(session::Session, lm::LinearModel)
 
     wdgs["Inputs"] = map(session, lm.table) do table
         colnames = collect(map(String, Tables.columnnames(table)))
-        options = AutocompleteOptions("" => colnames, "* " => colnames, "+ " => colnames)
+        options = AutocompleteOptions("" => colnames, "+ " => colnames, "* " => colnames)
         return Autocomplete(Observable(""), options)
     end
 
