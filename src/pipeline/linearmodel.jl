@@ -35,20 +35,31 @@ end
 
 function jsrender(session::Session, lm::LinearModel)
 
-    wdg1 = map(session, lm.table) do table
+    inputs_wdg = map(session, lm.table) do table
         colnames = collect(map(String, Tables.columnnames(table)))
-        options = AutocompleteOptions("" => colnames, "with" => colnames, "output" => colnames)
+        options = AutocompleteOptions("" => colnames, "* " => colnames, "+ " => colnames)
         return Autocomplete(Observable(""), options)
     end
 
-    wdg2 = map(session, lm.table) do table
+    output_wdg = map(session, lm.table) do table
+        colnames = collect(map(String, Tables.columnnames(table)))
+        options = AutocompleteOptions("" => colnames)
+        return Autocomplete(Observable(""), options)
+    end
+
+    method_wdg = map(session, lm.table) do table
         options = AutocompleteOptions(
-            "+" => String[],
             "noise" => [string(noise) for noise in keys(noises)],
             "link" => [string(link) for link in keys(links)]
         )
         return Autocomplete(Observable(""), options)
     end
+
+    wdgs = LittleDict(
+        "Inputs" => inputs_wdg,
+        "Output" => output_wdg,
+        "Method" => method_wdg,
+    )
 
     tryon(session, lm.table) do table
         lm.value[] = table
@@ -107,14 +118,14 @@ function jsrender(session::Session, lm::LinearModel)
 
     tryon(session, clear_button.value) do _
         lm.value[] = lm.table[]
-        wdg1.value[] = ""
-        wdg2.value[] = ""
+        for wdg in values(wdgs)
+            wdg.value[] = ""
+        end
     end
 
-    widgets = map(enumerate((wdg1, wdg2))) do (i, textbox)
-        name = i == 1 ? "Attributes" : "Methods"
+    widgets = Iterators.map(pairs(wdgs)) do (name, textbox)
         label = DOM.p(class="text-blue-800 text-xl font-semibold p-4 w-full text-left", name)
-        class = i == 2 ? "" : "mb-4"
+        class = name == "Method" ? "" : "mb-4"
         return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
     end
 
