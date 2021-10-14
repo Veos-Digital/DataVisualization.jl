@@ -32,6 +32,7 @@ Missings = "1"
 OrderedCollections = "1"
 StatsBase = "0.33"
 StructArrays = "0.6"
+WGLMakie = "0.4"
 julia = "1"
 
 [extras]
