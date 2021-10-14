@@ -1,6 +1,6 @@
 struct Autocomplete
-    f::JSServe.JSCode
     value::Observable{String}
+    options::Observable{AutocompleteOptions}
 end
 
 Autocomplete(value::Observable, options) = Autocomplete(value, collect(keys(options)), collect(values(options)))
