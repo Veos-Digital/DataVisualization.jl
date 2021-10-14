@@ -24,6 +24,7 @@ WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
 AlgebraOfGraphics = "0.4, 0.5"
+Clustering = "0.14"
 Makie = "0.14, 0.15"
 julia = "1"
 
