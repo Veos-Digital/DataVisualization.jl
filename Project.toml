@@ -36,6 +36,7 @@ OrderedCollections = "1"
 StatsBase = "0.33"
 StatsModels = "0.6"
 StructArrays = "0.6"
+Tables = "1"
 WGLMakie = "0.4"
 julia = "1"
 
