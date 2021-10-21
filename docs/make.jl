@@ -36,6 +36,10 @@ makedocs(;
             "Project" => "tabs/project.md",
             "Visualize" => "tabs/visualize.md",
         ],
+        "How to Guides" => [
+            "Filter" => "how_to_guides/filter.md",
+            "Visualize" => "how_to_guides/visualize.md",
+        ],
         "API" => "API.md",
     ],
     strict=true,
