@@ -3,14 +3,15 @@ struct Autocomplete
     options::Observable{AutocompleteOptions}
 end
 
-Autocomplete(value::Observable, options) = Autocomplete(value, collect(keys(options)), collect(values(options)))
+Autocomplete(value::Observable, options::AutocompleteOptions) = Autocomplete(value, Observable(options))
 
-function Autocomplete(value::Observable, pre, post′)
-    post = map(t -> t isa Union{AbstractArray, Tuple} ? t : [t], post′)
-    f = js"""
+function autocomplete_script(session::Session, options::Observable{AutocompleteOptions})
+    pre = map(collect∘keys, session, options)
+    post = map(collect∘values, session, options)
+    return js"""
         function (value) {
-            const pre = $(pre);
-            const post = $(post);
+            const pre = JSServe.get_observable($(pre));
+            const post = JSServe.get_observable($(post));
             const lastSpace = value.lastIndexOf(' ');
             const lastColon = value.lastIndexOf(':');
             const idx = Math.max(lastSpace, lastColon);
@@ -29,7 +30,6 @@ function Autocomplete(value::Observable, pre, post′)
             return {keys, values}
         }
     """
-    return Autocomplete(f, value)
 end
 
 function jsrender(session::Session, wdg::Autocomplete)
@@ -90,9 +90,11 @@ function jsrender(session::Session, wdg::Autocomplete)
     # When out of focus, unselect
     onjs(session, isblur, js"isblur => isblur && JSServe.update_obs($(selected), null)")
 
+    script = autocomplete_script(session, wdg.options)
+
     onValue = js"""
         function (value) {
-            const res = ($(wdg.f)(value));
+            const res = ($(script)(value));
             const list = $(list);
             for (let i = list.childNodes.length; i >= res.keys.length; i--) {
                 list.removeChild(list.lastChild);
