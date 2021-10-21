@@ -18,7 +18,7 @@ function jsrender(session::Session, cluster::Cluster)
 
     wdgs = LittleDict()
 
-    wdgs["Inputs"] = Autocomplete(Observable(""), data_options(session, cluster.table, keywords=["", "weights"]))
+    wdgs["Inputs"] = Autocomplete(session, Observable(""), data_options(session, cluster.table, keywords=["", "weights"]))
 
     analysis_options = vecmap(analysis_names) do name
         if name == "kmeans"
@@ -28,11 +28,11 @@ function jsrender(session::Session, cluster::Cluster)
         end
     end
 
-    wdgs["Method"] = Autocomplete(Observable(""), analysis_options)
+    wdgs["Method"] = Autocomplete(session, Observable(""), analysis_options)
 
     default_names = ":cluster"
 
-    wdgs["Rename"] = Autocomplete(Observable(default_names), ["" => ["cluster"]])
+    wdgs["Rename"] = Autocomplete(session, Observable(default_names), ["" => ["cluster"]])
 
     tryon(session, cluster.table) do table
         cluster.value[] = table

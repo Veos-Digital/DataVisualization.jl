@@ -31,7 +31,7 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
 
     wdgs = LittleDict()
 
-    wdgs["Inputs"] = Autocomplete(Observable(""), data_options(session, dimres.table, keywords=[""]))
+    wdgs["Inputs"] = Autocomplete(session, Observable(""), data_options(session, dimres.table, keywords=[""]))
 
     analysis_options = vecmap(analysis_names) do name
         if name in ("mds", "ica")
@@ -42,11 +42,11 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
     end
     pushfirst!(analysis_options, "+" => String[])
 
-    wdgs["Output"] = Autocomplete(Observable(""), analysis_options)
+    wdgs["Output"] = Autocomplete(session, Observable(""), analysis_options)
 
     default_names = ":projection"
 
-    wdgs["Rename"] = Autocomplete(Observable(default_names), ["" => ["projection"]])
+    wdgs["Rename"] = Autocomplete(session, Observable(default_names), ["" => ["projection"]])
 
     tryon(session, dimres.table) do table
         dimres.value[] = table

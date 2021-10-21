@@ -3,7 +3,8 @@ colnames(table) = collect(map(String, Tables.columnnames(table)))
 vecmap(f, iter) = [f(el) for el in iter]
 
 function data_options(session::Session, t::Observable; keywords=[""])
-    return map(session, t; result=Observable{AutocompleteOptions}()) do table
+    result = Observable{Vector{Pair{String, Vector{String}}}}()
+    return map(session, t; result) do table
         names = colnames(table)
         return [keyword => names for keyword in keywords]
     end

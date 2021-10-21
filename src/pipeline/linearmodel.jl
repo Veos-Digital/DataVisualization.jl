@@ -37,20 +37,20 @@ function jsrender(session::Session, lm::LinearModel)
 
     wdgs = LittleDict()
 
-    wdgs["Inputs"] = Autocomplete(Observable(""), data_options(session, lm.table, keywords=["", "+ ", "* "]))
+    wdgs["Inputs"] = Autocomplete(session, Observable(""), data_options(session, lm.table, keywords=["", "+ ", "* "]))
 
-    wdgs["Output"] = Autocomplete(Observable(""), data_options(session, lm.table, keywords=[""]))
+    wdgs["Output"] = Autocomplete(session, Observable(""), data_options(session, lm.table, keywords=[""]))
 
     method_options = [
         "noise" => vecmap(string, keys(noises)),
         "link" => vecmap(string, keys(links)),
     ]
 
-    wdgs["Method"] = Autocomplete(Observable(""), method_options)
+    wdgs["Method"] = Autocomplete(session, Observable(""), method_options)
 
     default_names = ":prediction :error"
 
-    wdgs["Rename"] = Autocomplete(Observable(default_names), ["" => ["prediction", "error"]])
+    wdgs["Rename"] = Autocomplete(session, Observable(default_names), ["" => ["prediction", "error"]])
 
     tryon(session, lm.table) do table
         lm.value[] = table

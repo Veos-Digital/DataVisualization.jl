@@ -1,11 +1,24 @@
-const AutocompleteOptions = Vector{Pair{String, Vector{String}}}
+const AutocompleteOptions = Vector{Tuple{String, Vector{String}}}
+
+to_autcomplete_options(options::Union{AbstractArray, Tuple}) = vecmap(Tuple, options)
+to_autcomplete_options(options::AbstractDict) = [Tuple(p) for p in pairs(options)]
 
 struct Autocomplete
     value::Observable{String}
     options::Observable{AutocompleteOptions}
 end
 
-Autocomplete(value::Observable, options::AutocompleteOptions) = Autocomplete(value, Observable(options))
+function Autocomplete(value::Observable, options′)
+    options = Observable(to_autcomplete_options(options′))
+    return Autocomplete(value, options)
+end
+
+function Autocomplete(session::Session, value::Observable, options′::Observable)
+    options = map(to_autcomplete_options, session, options′; result=Observable{AutocompleteOptions}())
+    return Autocomplete(value, options)
+end
+
+Autocomplete(session::Session, value::Observable, options′) = Autocomplete(value, options′)
 
 function autocomplete_script(options::Observable{AutocompleteOptions})
     return js"""

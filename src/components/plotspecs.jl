@@ -85,7 +85,7 @@ function jsrender(session::Session, specs::PlotSpecs)
             uppercasefirst(string(name))
         )
         options = specs_options(session, specs; name)
-        textbox = jsrender(session, Autocomplete(getproperty(specs, name), options))
+        textbox = jsrender(session, Autocomplete(session, getproperty(specs, name), options))
         class = name == :layers ? "" : "mb-4"
         return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
     end
