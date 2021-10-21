@@ -32,6 +32,8 @@ function PlotSpecs(df::Observable)
     return PlotSpecs(lift(colnames, df), Observable(""), Observable(""))
 end
 
+is_set(p::PlotSpecs) = !isempty(p.attributes[]) || !isempty(p.layers[])
+
 function to_visual(sym)
     plt = get(PLOT_TYPES, sym, nothing)
     isnothing(plt) || return visual(plt)
