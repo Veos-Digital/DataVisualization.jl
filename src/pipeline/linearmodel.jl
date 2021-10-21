@@ -37,32 +37,20 @@ function jsrender(session::Session, lm::LinearModel)
 
     wdgs = LittleDict()
 
-    wdgs["Inputs"] = map(session, lm.table) do table
-        colnames = collect(map(String, Tables.columnnames(table)))
-        options = AutocompleteOptions("" => colnames, "+ " => colnames, "* " => colnames)
-        return Autocomplete(Observable(""), options)
-    end
+    wdgs["Inputs"] = Autocomplete(Observable(""), data_options(session, lm.table, keywords=["", "+ ", "* "]))
 
-    wdgs["Output"] = map(session, lm.table) do table
-        colnames = collect(map(String, Tables.columnnames(table)))
-        options = AutocompleteOptions("" => colnames)
-        return Autocomplete(Observable(""), options)
-    end
+    wdgs["Output"] = Autocomplete(Observable(""), data_options(session, lm.table, keywords=[""]))
 
-    wdgs["Method"] = map(session, lm.table) do table
-        options = AutocompleteOptions(
-            "noise" => [string(noise) for noise in keys(noises)],
-            "link" => [string(link) for link in keys(links)]
-        )
-        return Autocomplete(Observable(""), options)
-    end
+    method_options = [
+        "noise" => vecmap(string, keys(noises)),
+        "link" => vecmap(string, keys(links)),
+    ]
+
+    wdgs["Method"] = Autocomplete(Observable(""), method_options)
 
     default_names = ":prediction :error"
 
-    wdgs["Rename"] = map(session, lm.table) do table
-        options = AutocompleteOptions("" => ["prediction", "error"])
-        return Autocomplete(Observable(default_names), options)
-    end
+    wdgs["Rename"] = Autocomplete(Observable(default_names), ["" => ["prediction", "error"]])
 
     tryon(session, lm.table) do table
         lm.value[] = table
@@ -78,17 +66,17 @@ function jsrender(session::Session, lm::LinearModel)
         # parse textbox value to formula
         responsevariable = nothing
         predictors = ConstantTerm(1)
-        for call in compute_calls(wdgs["Inputs"][].value[])
+        for call in compute_calls(wdgs["Inputs"].value[])
             predictors += combinations(map(Symbol, call.positional))
         end
-        output_call = only(compute_calls(wdgs["Output"][].value[]))
+        output_call = only(compute_calls(wdgs["Output"].value[]))
         responsevariable = Symbol(only(output_call.positional))
 
         response = Term(responsevariable)
         formula = response ~ predictors
 
-        method_call = only(compute_calls(wdgs["Method"][].value[]))
-        rename_call = only(compute_calls(wdgs["Rename"][].value[]))
+        method_call = only(compute_calls(wdgs["Method"].value[]))
+        rename_call = only(compute_calls(wdgs["Rename"].value[]))
         pred_name, err_name = rename_call.positional
         distribution, link = Normal(), nothing
         for (k, v) in method_call.named
@@ -108,7 +96,7 @@ function jsrender(session::Session, lm::LinearModel)
         for wdg in values(wdgs)
             wdg[].value[] = ""
         end
-        wdgs["Rename"][].value[] = default_names
+        wdgs["Rename"].value[] = default_names
     end
 
     widgets = Iterators.map(pairs(wdgs)) do (name, textbox)

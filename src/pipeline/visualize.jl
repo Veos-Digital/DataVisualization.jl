@@ -1,13 +1,13 @@
 struct Visualize{T} <: AbstractPipeline{T}
     table::Observable{T}
-    plotspecs::Observable{PlotSpecs} # TODO: might be better to only update the js observables
+    plotspecs::PlotSpecs
 end
 
-Visualize(table::Observable{T}) where {T} = Visualize{T}(table, PlotSpecs(table[]))
+Visualize(table::Observable{T}) where {T} = Visualize{T}(table, PlotSpecs(table))
 
 output(v::Visualize) = v.table # output equals input for `Visualize`
 
-to_algebraic(v::Visualize) = data(v.table[]) * to_algebraic(v.plotspecs[])
+to_algebraic(v::Visualize) = data(v.table[]) * to_algebraic(v.plotspecs)
 
 defaultplot() = Figure(; backgroundcolor=colorant"#F3F4F6")
 

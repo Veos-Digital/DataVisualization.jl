@@ -1,3 +1,5 @@
+const AutocompleteOptions = Vector{Pair{String, Vector{String}}}
+
 struct Autocomplete
     value::Observable{String}
     options::Observable{AutocompleteOptions}
@@ -5,13 +7,12 @@ end
 
 Autocomplete(value::Observable, options::AutocompleteOptions) = Autocomplete(value, Observable(options))
 
-function autocomplete_script(session::Session, options::Observable{AutocompleteOptions})
-    pre = map(collect∘keys, session, options)
-    post = map(collect∘values, session, options)
+function autocomplete_script(options::Observable{AutocompleteOptions})
     return js"""
         function (value) {
-            const pre = JSServe.get_observable($(pre));
-            const post = JSServe.get_observable($(post));
+            const options = JSServe.get_observable($(options));
+            const pre = options.map(e => e[0]);
+            const post = options.map(e => e[1]);
             const lastSpace = value.lastIndexOf(' ');
             const lastColon = value.lastIndexOf(':');
             const idx = Math.max(lastSpace, lastColon);
@@ -90,7 +91,7 @@ function jsrender(session::Session, wdg::Autocomplete)
     # When out of focus, unselect
     onjs(session, isblur, js"isblur => isblur && JSServe.update_obs($(selected), null)")
 
-    script = autocomplete_script(session, wdg.options)
+    script = autocomplete_script(wdg.options)
 
     onValue = js"""
         function (value) {
