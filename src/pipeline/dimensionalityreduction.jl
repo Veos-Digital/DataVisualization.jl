@@ -31,30 +31,22 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
 
     wdgs = LittleDict()
 
-    wdgs["Inputs"] = map(session, dimres.table) do table
-        colnames = collect(map(String, Tables.columnnames(table)))
-        options = AutocompleteOptions("" => colnames)
-        return Autocomplete(Observable(""), options)
-    end
+    wdgs["Inputs"] = Autocomplete(session, Observable(""), data_options(session, dimres.table, keywords=[""]))
 
-    wdgs["Method"] = map(session, dimres.table) do table
-        options = AutocompleteOptions("+" => String[])
-        for name in analysis_names
-            if name in ("mds", "ica")
-                options[name * " dims"] = [string(i) for i in 1:100]
-            else
-                options[name] = String[]
-            end
+    analysis_options = vecmap(analysis_names) do name
+        if name in ("mds", "ica")
+            name * " dims" => [string(i) for i in 1:100]
+        else
+            name => String[]
         end
-        return Autocomplete(Observable(""), options)
     end
+    pushfirst!(analysis_options, "+" => String[])
+
+    wdgs["Output"] = Autocomplete(session, Observable(""), analysis_options)
 
     default_names = ":projection"
 
-    wdgs["Rename"] = map(session, dimres.table) do table
-        options = AutocompleteOptions("" => ["projection"])
-        return Autocomplete(Observable(default_names), options)
-    end
+    wdgs["Rename"] = Autocomplete(session, Observable(default_names), ["" => ["projection"]])
 
     tryon(session, dimres.table) do table
         dimres.value[] = table
@@ -66,12 +58,12 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
     tryon(session, process_button.value) do _
         local table = dimres.table[]
         result = to_littledict(table)
-        inputs_call = only(compute_calls(wdgs["Inputs"][].value[]))
+        inputs_call = only(compute_calls(wdgs["Inputs"].value[]))
         cols = Tables.getcolumn.(Ref(table), Symbol.(inputs_call.positional))
         X = reduce(vcat, transpose.(cols))
         kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(table, Symbol(v)), inputs_call.named)
-        method_call = only(compute_calls(wdgs["Method"][].value[]))
-        rename_call = only(compute_calls(wdgs["Rename"][].value[]))
+        method_call = only(compute_calls(wdgs["Method"].value[]))
+        rename_call = only(compute_calls(wdgs["Rename"].value[]))
 
         name = only(rename_call.positional)
 
@@ -97,7 +89,7 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
         for wdg in values(wdgs)
             wdg[].value[] = ""
         end
-        wdgs["Rename"][].value[] = default_names
+        wdgs["Rename"].value[] = default_names
     end
 
     widgets = Iterators.map(pairs(wdgs)) do (name, textbox)

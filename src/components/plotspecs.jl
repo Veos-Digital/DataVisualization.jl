@@ -23,15 +23,16 @@ const ANALYSES = (
 const STYLES = (:color, :marker, :markersize, :linestyle, :col, :row, :layout, :side, :dodge, :stack)
 
 struct PlotSpecs
-    names::Vector{String}
+    names::Observable{Vector{String}}
     attributes::Observable{String}
     layers::Observable{String}
 end
 
-function PlotSpecs(df)
-    names = [string(name) for name in Tables.columnnames(Tables.columns(df))]
-    return PlotSpecs(names, Observable(""), Observable(""))
+function PlotSpecs(df::Observable)
+    return PlotSpecs(lift(colnames, df), Observable(""), Observable(""))
 end
+
+is_set(p::PlotSpecs) = !isempty(p.attributes[]) || !isempty(p.layers[])
 
 function to_visual(sym)
     plt = get(PLOT_TYPES, sym, nothing)
@@ -59,24 +60,34 @@ to_algebraic(v::Union{Tuple, AbstractArray}) = mapreduce(to_algebraic, *, v, ini
 
 to_algebraic(specs::PlotSpecs) = to_algebraic(map(getindex, (specs.attributes, specs.layers)))
 
+function layers_options()
+    options = vecmap(((keys(PLOT_TYPES)..., keys(ANALYSES)...))) do key
+        string(key) => String[]
+    end
+    pushfirst!(options, "+" => String[])
+    return options
+end
+
+function style_options(names)
+    options = vecmap(style -> string(style) => names, STYLES)
+    pushfirst!(options, "" => names)
+    return options
+end
+
+function specs_options(session::Session, specs::PlotSpecs; name)
+    return map(session, specs.names) do names
+        return name == :layers ? [layers_options(); style_options(names)] : style_options(names)
+    end
+end
+
 function jsrender(session::Session, specs::PlotSpecs)
     widgets = map([:attributes, :layers]) do name
         label = DOM.p(
             class="text-blue-800 text-xl font-semibold p-4 w-full text-left",
             uppercasefirst(string(name))
         )
-        options = AutocompleteOptions()
-        if name == :layers
-            options["+"] = String[]
-            for key in (keys(PLOT_TYPES)..., keys(ANALYSES)...)
-                options[String(key)] = String[]
-            end
-        end
-        options[""] = specs.names
-        for style in STYLES
-            options[String(style)] = specs.names
-        end
-        textbox = jsrender(session, Autocomplete(getproperty(specs, name), options))
+        options = specs_options(session, specs; name)
+        textbox = jsrender(session, Autocomplete(session, getproperty(specs, name), options))
         class = name == :layers ? "" : "mb-4"
         return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
     end

@@ -1,16 +1,31 @@
+const AutocompleteOptions = Vector{Tuple{String, Vector{String}}}
+
+to_autcomplete_options(options::Union{AbstractArray, Tuple}) = vecmap(Tuple, options)
+to_autcomplete_options(options::AbstractDict) = [Tuple(p) for p in pairs(options)]
+
 struct Autocomplete
-    f::JSServe.JSCode
     value::Observable{String}
+    options::Observable{AutocompleteOptions}
 end
 
-Autocomplete(value::Observable, options) = Autocomplete(value, collect(keys(options)), collect(values(options)))
+function Autocomplete(value::Observable, options′)
+    options = Observable(to_autcomplete_options(options′))
+    return Autocomplete(value, options)
+end
 
-function Autocomplete(value::Observable, pre, post′)
-    post = map(t -> t isa Union{AbstractArray, Tuple} ? t : [t], post′)
-    f = js"""
+function Autocomplete(session::Session, value::Observable, options′::Observable)
+    options = map(to_autcomplete_options, session, options′; result=Observable{AutocompleteOptions}())
+    return Autocomplete(value, options)
+end
+
+Autocomplete(session::Session, value::Observable, options′) = Autocomplete(value, options′)
+
+function autocomplete_script(options::Observable{AutocompleteOptions})
+    return js"""
         function (value) {
-            const pre = $(pre);
-            const post = $(post);
+            const options = JSServe.get_observable($(options));
+            const pre = options.map(e => e[0]);
+            const post = options.map(e => e[1]);
             const lastSpace = value.lastIndexOf(' ');
             const lastColon = value.lastIndexOf(':');
             const idx = Math.max(lastSpace, lastColon);
@@ -29,7 +44,6 @@ function Autocomplete(value::Observable, pre, post′)
             return {keys, values}
         }
     """
-    return Autocomplete(f, value)
 end
 
 function jsrender(session::Session, wdg::Autocomplete)
@@ -90,9 +104,11 @@ function jsrender(session::Session, wdg::Autocomplete)
     # When out of focus, unselect
     onjs(session, isblur, js"isblur => isblur && JSServe.update_obs($(selected), null)")
 
+    script = autocomplete_script(wdg.options)
+
     onValue = js"""
         function (value) {
-            const res = ($(wdg.f)(value));
+            const res = ($(script)(value));
             const list = $(list);
             for (let i = list.childNodes.length; i >= res.keys.length; i--) {
                 list.removeChild(list.lastChild);

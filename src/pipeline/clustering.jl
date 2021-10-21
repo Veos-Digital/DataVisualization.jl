@@ -18,30 +18,21 @@ function jsrender(session::Session, cluster::Cluster)
 
     wdgs = LittleDict()
 
-    wdgs["Inputs"] = map(session, cluster.table) do table
-        colnames = collect(map(String, Tables.columnnames(table)))
-        options = AutocompleteOptions("" => colnames, "weights" => colnames)
-        return Autocomplete(Observable(""), options)
+    wdgs["Inputs"] = Autocomplete(session, Observable(""), data_options(session, cluster.table, keywords=["", "weights"]))
+
+    analysis_options = vecmap(analysis_names) do name
+        if name == "kmeans"
+            name * " classes" => [string(i) for i in 1:100]
+        else
+            name => String[]
+        end
     end
 
-    wdgs["Method"] = map(session, cluster.table) do table
-        options = AutocompleteOptions()
-        for name in analysis_names
-            if name == "kmeans"
-                options[name * " classes"] = [string(i) for i in 1:100]
-            else
-                options[name] = String[]
-            end
-        end
-        return Autocomplete(Observable(""), options)
-    end
+    wdgs["Method"] = Autocomplete(session, Observable(""), analysis_options)
 
     default_names = ":cluster"
 
-    wdgs["Rename"] = map(session, cluster.table) do table
-        options = AutocompleteOptions("" => ["cluster"])
-        return Autocomplete(Observable(default_names), options)
-    end
+    wdgs["Rename"] = Autocomplete(session, Observable(default_names), ["" => ["cluster"]])
 
     tryon(session, cluster.table) do table
         cluster.value[] = table
@@ -55,14 +46,14 @@ function jsrender(session::Session, cluster::Cluster)
     tryon(session, process_button.value) do _
         local table = cluster.table[]
         result = to_littledict(table)
-        inputs_call = only(compute_calls(wdgs["Inputs"][].value[]))
+        inputs_call = only(compute_calls(wdgs["Inputs"].value[]))
         cols = Tables.getcolumn.(Ref(table), Symbol.(inputs_call.positional))
         X = reduce(vcat, transpose.(cols))
         kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(table, Symbol(v)), inputs_call.named)
         D = pairwise(dist, X, dims=2)
 
-        method_call = only(compute_calls(wdgs["Method"][].value[]))
-        rename_call = only(compute_calls(wdgs["Rename"][].value[]))
+        method_call = only(compute_calls(wdgs["Method"].value[]))
+        rename_call = only(compute_calls(wdgs["Rename"].value[]))
         name = only(rename_call.positional)
 
         an = clusterings[Symbol(only(method_call.fs))]
@@ -86,7 +77,7 @@ function jsrender(session::Session, cluster::Cluster)
         for wdg in values(wdgs)
             wdg[].value[] = ""
         end
-        wdgs["Rename"][].value[] = default_names
+        wdgs["Rename"].value[] = default_names
     end
 
     widgets = Iterators.map(pairs(wdgs)) do (name, textbox)
