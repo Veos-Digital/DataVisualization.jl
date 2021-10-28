@@ -22,7 +22,7 @@ using MultivariateStats: PCA,
                          classical_mds,
                          transform
 using OrderedCollections
-using Graphs
+using Graphs: SimpleDiGraph, inneighbors, topological_sort_by_dfs
 using Distances: Euclidean, pairwise
 using Clustering
 using GLM, StatsModels

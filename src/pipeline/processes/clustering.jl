@@ -33,7 +33,7 @@ function Cluster(table::Observable{T}) where {T}
     return Cluster(table, card)
 end
 
-jsrender(session, cluster::Cluster) = jsrender(session, cluster.card)
+jsrender(session::Session, cluster::Cluster) = jsrender(session, cluster.card)
 
 function compute(cluster::Cluster, data)
     dist = Euclidean() # TODO: make configurable

@@ -52,11 +52,6 @@ function columns_out(card::ProcessingCard)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
-    widgets = map(pairs(autocompletes(card))) do (name, textbox)
-        label = DOM.p(class="text-blue-800 text-xl font-semibold p-4 w-full text-left", titlecase(string(name)))
-        class = name == :rename ? "" : "mb-4"
-        return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
-    end
-    ui = DOM.div(widgets..., DOM.div(class="mt-12 mb-16 pl-4", card.process_button, card.clear_button))
+    ui = DOM.div(autocompletes(card)..., DOM.div(class="mt-12 mb-16 pl-4", card.process_button, card.clear_button))
     return jsrender(session, ui)
 end
