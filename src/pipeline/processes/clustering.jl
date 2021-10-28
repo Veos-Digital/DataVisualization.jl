@@ -88,5 +88,5 @@ function jsrender(session::Session, cluster::Cluster)
 
     ui = DOM.div(widgets..., DOM.div(class="mt-12 mb-16 pl-4", process_button, clear_button))
 
-    return jsrender(session, with_tabular(ui, cluster.value))
+    return jsrender(session, ui)
 end

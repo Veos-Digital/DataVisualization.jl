@@ -107,5 +107,5 @@ function jsrender(session::Session, lm::LinearModel)
 
     ui = DOM.div(widgets..., DOM.div(class="mt-12 mb-16 pl-4", process_button, clear_button))
 
-    return jsrender(session, with_tabular(ui, lm.value))
+    return jsrender(session, ui)
 end

@@ -58,30 +58,38 @@ function compute_calls(str::AbstractString)
     return calls
 end
 
-function tryon(f, session::Session, obs::Observable)
-    error_msg = Observable("")
-    onjs(session, error_msg, js"""
-        function (value) {
-            alert(value);
-        }
-    """)
-    return on(session, obs) do val
-        try
-            f(val)
-        catch err
-            io = IOBuffer()
-            print(io, "Could not complete command due to the following error.")
-            print(io, "\n\n")
-            print(io, err)
-            error_msg[] = String(take!(io))
+for sym in (:on, :onany)
+    trysim = Symbol(:try, sym)
+    @eval function $trysim(f, session::Session, obs::Observable...)
+        error_msg = Observable("")
+        onjs(session, error_msg, js"""
+            function (value) {
+                alert(value);
+            }
+        """)
+        return $sym(session, obs...) do args...
+            try
+                f(args...)
+            catch err
+                io = IOBuffer()
+                print(io, "Could not complete command due to the following error.")
+                print(io, "\n\n")
+                print(io, err)
+                error_msg[] = String(take!(io))
+            end
         end
     end
 end
 
-function with_tabular(widget, table)
+function with_tabular(widget, table; padwidgets=16, padtable=16)
     return DOM.div(
-        class="grid grid-cols-3 gap-32 h-full",
-        DOM.div(class="col-span-1", widget),
-        DOM.div(class="col-span-2", DOM.div(Tabular(table)))
+        class="grid grid-cols-3 h-full",
+        DOM.div(class="col-span-1 pr-$padwidgets", widget),
+        DOM.div(class="col-span-2 pl-$padtable", DOM.div(Tabular(table)))
     )
 end
+
+const scrollablecomponent = (
+    class="pr-16",
+    style="overflow-y:scroll; max-height: 80vh;"
+)

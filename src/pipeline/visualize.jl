@@ -26,16 +26,20 @@ function jsrender(session::Session, v::Visualize)
 
     plot_button = Button("Plot", class=buttonclass(true))
     clear_button = Button("Clear", class=buttonclass(false))
-    plotui = DOM.div(v.plotspecs, DOM.div(class="mt-12 pl-4", plot_button, clear_button))
+    plotui = DOM.div(
+        v.plotspecs,
+        DOM.div(class="mt-12 pl-4", plot_button, clear_button);
+        scrollablecomponent...
+    )
 
     tryon(update_plot!, session, plot_button.value)
     tryon(update_plot!, session, v.plotspecs.names) # gets updated when table changes
     tryon(reset_plot!, session, clear_button.value)
 
     layout = DOM.div(
-        class="grid grid-cols-3 gap-32",
+        class="grid grid-cols-3",
         DOM.div(class="col-span-1", plotui),
-        DOM.div(class="col-span-2", plot)
+        DOM.div(class="col-span-2 pl-16", plot)
     )
     return jsrender(session, layout)
 end
