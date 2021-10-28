@@ -47,7 +47,7 @@ function DimensionalityReduction(table::Observable)
     return DimensionalityReduction(table, card)
 end
 
-function compute(dimres::DimensionalityReduction, data)
+function (dimres::DimensionalityReduction)(data)
     card = dimres.card
     inputs_call = only(card.inputs.parsed)
     method_call = only(card.method.parsed)

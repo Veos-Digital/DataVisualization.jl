@@ -51,7 +51,7 @@ function LinearModel(table::Observable)
     return LinearModel(table, card)
 end
 
-function compute(lm::LinearModel, data)
+function (lm::LinearModel)(data)
     card = lm.card
     inputs_calls = card.inputs.parsed
     output_call = only(card.output.parsed)

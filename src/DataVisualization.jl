@@ -22,7 +22,7 @@ using MultivariateStats: PCA,
                          classical_mds,
                          transform
 using OrderedCollections
-using Graphs: SimpleDiGraph, inneighbors, topological_sort_by_dfs
+using Graphs: SimpleDiGraph, add_edge!, inneighbors, topological_sort_by_dfs
 using Distances: Euclidean, pairwise
 using Clustering
 using GLM, StatsModels
@@ -58,7 +58,6 @@ abstract type AbstractPipeline{T} end
 output(p::AbstractPipeline) = p.value
 
 include("utils.jl")
-include("graph_utils.jl")
 include("components/filepicker.jl")
 include("components/checkboxes.jl")
 include("components/rangeselector.jl")

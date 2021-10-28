@@ -33,7 +33,7 @@ function Cluster(table::Observable{T}) where {T}
     return Cluster(table, card)
 end
 
-function compute(cluster::Cluster, data)
+function (cluster::Cluster)(data)
     card = cluster.card
     inputs_call = only(card.inputs.parsed)
     method_call = only(card.method.parsed)
