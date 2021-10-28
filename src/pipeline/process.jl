@@ -22,6 +22,11 @@ function Process(table::Observable, components=(:Predict, :Cluster, :Project))
 end
 
 function jsrender(session::Session, process::Process)
-    ui = DOM.div(process.cards)
-    return jsrender(session, with_tabular(ui, process.value))
+    ui = map(session, process.cards) do cards
+        return DOM.div(
+            cards;
+            scrollablecomponent...
+        )
+    end
+    return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end

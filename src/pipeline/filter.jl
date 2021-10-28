@@ -21,7 +21,11 @@ function jsrender(session::Session, f::Filter)
 
     filter_button = Button("Filter", class=buttonclass(true))
     clear_button = Button("Clear", class=buttonclass(false))
-    ui = DOM.div(class="mt-16", f.filters, DOM.div(class="mt-12 pl-4", filter_button, clear_button))
+    ui = DOM.div(
+        f.filters,
+        DOM.div(class="mt-12 pl-4", filter_button, clear_button);
+        scrollablecomponent...
+    )
 
     tryon(session, filter_button.value) do _
         f.value[] = selected_data(f)
@@ -31,5 +35,5 @@ function jsrender(session::Session, f::Filter)
         f.value[] = selected_data(f)
     end
 
-    return jsrender(session, with_tabular(ui, f.value))
+    return jsrender(session, with_tabular(ui, f.value; padwidgets=0))
 end

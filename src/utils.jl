@@ -81,10 +81,15 @@ for sym in (:on, :onany)
     end
 end
 
-function with_tabular(widget, table)
+function with_tabular(widget, table; padwidgets=16, padtable=16)
     return DOM.div(
-        class="grid grid-cols-3 gap-32 h-full",
-        DOM.div(class="col-span-1", widget),
-        DOM.div(class="col-span-2", DOM.div(Tabular(table)))
+        class="grid grid-cols-3 h-full",
+        DOM.div(class="col-span-1 pr-$padwidgets", widget),
+        DOM.div(class="col-span-2 pl-$padtable", DOM.div(Tabular(table)))
     )
 end
+
+const scrollablecomponent = (
+    class="pr-16",
+    style="overflow-y:scroll; max-height: 80vh;"
+)

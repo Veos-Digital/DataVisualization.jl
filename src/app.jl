@@ -39,7 +39,8 @@ function jsrender(session::Session, ui::UI)
         return Option(String(name), DOM.div(pipeline), Observable(true))
     end
     tabs = Tabs(pipelines)
-    return jsrender(session, DOM.div(class="bg-gray-100", tabs))
+    evaljs(session, js"document.body.classList.add('bg-gray-100');")
+    return jsrender(session, tabs)
 end
 
 """
