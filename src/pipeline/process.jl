@@ -12,7 +12,7 @@ end
 
 compute_on_graph(input, steps, idx::Integer) = compute_on_graph(input, steps, idx:idx)
 
-function compute_on_graph(input, steps, idx::AbstractVector{<:Integer}=eachindex(steps)) where {T}
+function compute_on_graph(input, steps, idxs::AbstractVector{<:Integer}=eachindex(steps)) where {T}
     cards = [step.card for step in steps]
     columns_input = columns_in.(cards)
     columns_output = columns_out.(cards)
@@ -24,14 +24,17 @@ function compute_on_graph(input, steps, idx::AbstractVector{<:Integer}=eachindex
         end
     end
     needs_updating = fill(false, N)
+    needs_updating[idxs] .= true
     sorted = topological_sort_by_dfs(g)
+    current = input
     for node in sorted
         for neighbor in inneighbors(g, node)
             needs_updating[node] |= needs_updating[neighbor]
         end
         needs_updating[node] &= !isempty(columns_input[node])
+        needs_updating[node] && (current = steps[node](current))
     end
-    return foldl(|>, steps[sorted[needs_updating]], init=input)
+    return current
 end
 
 function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
