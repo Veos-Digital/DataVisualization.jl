@@ -100,5 +100,5 @@ function jsrender(session::Session, dimres::DimensionalityReduction)
 
     ui = DOM.div(widgets..., DOM.div(class="mt-12 mb-16 pl-4", process_button, clear_button))
 
-    return jsrender(session, with_tabular(ui, dimres.value))
+    return jsrender(session, ui)
 end

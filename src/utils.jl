@@ -58,22 +58,25 @@ function compute_calls(str::AbstractString)
     return calls
 end
 
-function tryon(f, session::Session, obs::Observable)
-    error_msg = Observable("")
-    onjs(session, error_msg, js"""
-        function (value) {
-            alert(value);
-        }
-    """)
-    return on(session, obs) do val
-        try
-            f(val)
-        catch err
-            io = IOBuffer()
-            print(io, "Could not complete command due to the following error.")
-            print(io, "\n\n")
-            print(io, err)
-            error_msg[] = String(take!(io))
+for sym in (:on, :onany)
+    trysim = Symbol(:try, sym)
+    @eval function $trysim(f, session::Session, obs::Observable...)
+        error_msg = Observable("")
+        onjs(session, error_msg, js"""
+            function (value) {
+                alert(value);
+            }
+        """)
+        return $sym(session, obs...) do args...
+            try
+                f(args...)
+            catch err
+                io = IOBuffer()
+                print(io, "Could not complete command due to the following error.")
+                print(io, "\n\n")
+                print(io, err)
+                error_msg[] = String(take!(io))
+            end
         end
     end
 end
