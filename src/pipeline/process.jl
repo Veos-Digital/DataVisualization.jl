@@ -13,12 +13,12 @@ end
 function Process(table::Observable, components=(:Predict, :Cluster, :Project))
     cards = Any[]
     current = table
-    for component in components
-        card = getproperty(available_processes, component)(current)
-        push!(cards, card)
-        current = output(card)
-    end
-    return Process(table, Observable(cards), current)
+    # for component in components
+    #     card = getproperty(available_processes, component)(current)
+    #     push!(cards, card)
+    #     current = output(card)
+    # end
+    return Process(table, Observable(Any[Cluster(table)]), table)
 end
 
 function jsrender(session::Session, process::Process)

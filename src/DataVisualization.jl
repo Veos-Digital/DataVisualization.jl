@@ -22,6 +22,7 @@ using MultivariateStats: PCA,
                          classical_mds,
                          transform
 using OrderedCollections
+using Graphs
 using Distances: Euclidean, pairwise
 using Clustering
 using GLM, StatsModels
@@ -57,6 +58,7 @@ abstract type AbstractPipeline{T} end
 output(p::AbstractPipeline) = p.value
 
 include("utils.jl")
+include("graph_utils.jl")
 include("components/filepicker.jl")
 include("components/checkboxes.jl")
 include("components/rangeselector.jl")
@@ -66,6 +68,7 @@ include("components/tabular.jl")
 include("components/autocomplete.jl")
 include("components/filters.jl")
 include("components/plotspecs.jl")
+include("components/processing_card.jl")
 include("pipeline/processes/linearmodel.jl")
 include("pipeline/processes/clustering.jl")
 include("pipeline/processes/dimensionalityreduction.jl")

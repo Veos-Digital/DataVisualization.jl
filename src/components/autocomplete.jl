@@ -144,3 +144,25 @@ function jsrender(session::Session, wdg::Autocomplete)
 
     return jsrender(session, div)
 end
+
+struct RichTextField
+    name::String
+    widget::Autocomplete
+    default::String
+    parsed::Vector{Call}
+end
+
+function RichTextField(name, widget::Autocomplete, default)
+    rtf = RichTextField(name, widget, default, Call[])
+    parse!(rtf)
+    return rtf
+end
+
+function RichTextField(name, options::Observable{AutocompleteOptions}, default)
+    return RichTextField(name, Autocomplete(Observable(default), options), default)
+end
+
+function parse!(rtf::RichTextField)
+    empty!(rtf.parsed)
+    append!(rtf.parsed, compute_calls(rtf.widget.value[]))
+end

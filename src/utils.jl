@@ -2,9 +2,8 @@ colnames(table) = collect(map(String, Tables.columnnames(table)))
 
 vecmap(f, iter) = [f(el) for el in iter]
 
-function data_options(session::Session, t::Observable; keywords=[""])
-    result = Observable{Vector{Pair{String, Vector{String}}}}()
-    return map(session, t; result) do table
+function data_options(t::Observable; keywords=[""])
+    return lift(t) do table
         names = colnames(table)
         return [keyword => names for keyword in keywords]
     end
@@ -93,3 +92,8 @@ const scrollablecomponent = (
     class="pr-16",
     style="overflow-y:scroll; max-height: 80vh;"
 )
+
+function filter_namedtuple(f, nt)
+    names = filter(key -> f(nt[key]), keys(nt))
+    return NamedTuple{names}(nt)
+end
