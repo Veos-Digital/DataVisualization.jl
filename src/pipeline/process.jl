@@ -32,7 +32,9 @@ function compute_on_graph(input, steps, idxs::AbstractVector{<:Integer}=eachinde
             needs_updating[node] |= needs_updating[neighbor]
         end
         needs_updating[node] &= !isempty(columns_input[node])
-        needs_updating[node] && (current = steps[node](current))
+        if needs_updating[node]
+            current = steps[node](current)
+        end
     end
     return current
 end
@@ -43,7 +45,7 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
     for (idx, step) in enumerate(steps)
         for button in (step.card.process_button, step.card.clear_button)
             on(button.value) do _
-                value[] = compute_on_graph(table[], steps, idx)
+                value[] = compute_on_graph(value[], steps, idx)
             end
         end
     end

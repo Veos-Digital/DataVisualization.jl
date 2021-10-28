@@ -59,9 +59,6 @@ function (lm::LinearModel)(data)
     rename_call = only(card.rename.parsed)
 
     result = to_littledict(data)
-
-    # parse textbox value to formula
-    responsevariable = nothing
     predictors = ConstantTerm(1)
     for call in inputs_calls
         predictors += combinations(map(Symbol, call.positional))
