@@ -1,4 +1,4 @@
-const available_processes = (
+const available_processing_steps = (
     Predict = LinearModel,
     Cluster = Cluster,
     Project = DimensionalityReduction,
@@ -6,25 +6,24 @@ const available_processes = (
 
 struct Process{T} <: AbstractPipeline{T}
     table::Observable{T}
-    cards::Observable{Vector{Any}}
+    steps::Observable{Vector{AbstractProcessingStep{T}}}
     value::Observable{T}
 end
 
-function Process(table::Observable, components=(:Predict, :Cluster, :Project))
-    cards = Any[]
-    current = table
-    # for component in components
-    #     card = getproperty(available_processes, component)(current)
-    #     push!(cards, card)
-    #     current = output(card)
-    # end
-    return Process(table, Observable(Any[Cluster(table)]), table)
+function Process(table::Observable{T}, components=(:Predict, :Cluster, :Project)) where {T}
+    steps = AbstractProcessingStep{T}[]
+    value = Observable(table[])
+    for component in components
+        step = getproperty(available_processing_steps, component)(value)
+        push!(steps, step)
+    end
+    return Process(table, Observable(steps), value)
 end
 
 function jsrender(session::Session, process::Process)
-    ui = map(session, process.cards) do cards
+    ui = map(session, process.steps) do steps
         return DOM.div(
-            cards;
+            steps;
             scrollablecomponent...
         )
     end
