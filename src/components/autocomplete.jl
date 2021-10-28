@@ -13,13 +13,6 @@ function Autocomplete(value::Observable, options′)
     return Autocomplete(value, options)
 end
 
-function Autocomplete(session::Session, value::Observable, options′::Observable)
-    options = map(to_autocomplete_options, session, options′; result=Observable{AutocompleteOptions}())
-    return Autocomplete(value, options)
-end
-
-Autocomplete(session::Session, value::Observable, options′) = Autocomplete(value, options′)
-
 function autocomplete_script(options::Observable{AutocompleteOptions})
     return js"""
         function (value) {
