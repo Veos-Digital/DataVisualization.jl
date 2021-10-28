@@ -1,3 +1,7 @@
+abstract type AbstractProcessingStep{T} end
+
+jsrender(session::Session, step::AbstractProcessingStep) = jsrender(session, step.card)
+
 struct ProcessingCard
     name::Symbol
     inputs::RichTextField

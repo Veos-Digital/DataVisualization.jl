@@ -1,4 +1,4 @@
-struct Cluster{T}
+struct Cluster{T} <: AbstractProcessingStep{T}
     table::Observable{T}
     card::ProcessingCard
 end
@@ -33,19 +33,19 @@ function Cluster(table::Observable{T}) where {T}
     return Cluster(table, card)
 end
 
-jsrender(session::Session, cluster::Cluster) = jsrender(session, cluster.card)
-
 function compute(cluster::Cluster, data)
+    card = cluster.card
+    inputs_call = only(card.inputs.parsed)
+    method_call = only(card.method.parsed)
+    rename_call = only(card.method.rename)
+    name = only(rename_call.positional)
+
     dist = Euclidean() # TODO: make configurable
     result = to_littledict(data)
-    inputs_call = only(cluster.card.inputs.parsed)
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
     X = reduce(vcat, transpose.(cols))
     kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(data, Symbol(v)), inputs_call.named)
     D = pairwise(dist, X, dims=2)
-
-    method_call = only(cluster.card.method.parsed)
-    rename_call = only(cluster.card.method.rename)
     name = only(rename_call.positional)
 
     an = clusterings[Symbol(only(method_call.fs))]
