@@ -110,7 +110,7 @@ function jsrender(session::Session, wdg::Autocomplete)
         function (value) {
             const res = ($(script)(value));
             const list = $(list);
-            for (let i = list.childNodes.length; i > res.keys.length; i--) {
+            while (list.childNodes.length > res.keys.length) {
                 list.removeChild(list.lastChild);
             }
             for (let i = 0; i < res.keys.length; i++) {
