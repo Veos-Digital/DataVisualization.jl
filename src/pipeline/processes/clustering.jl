@@ -41,7 +41,6 @@ function (cluster::Cluster)(data)
     name = only(rename_call.positional)
 
     dist = Euclidean() # TODO: make configurable
-    result = to_littledict(data)
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
     X = reduce(vcat, transpose.(cols))
     kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(data, Symbol(v)), inputs_call.named)
@@ -59,6 +58,5 @@ function (cluster::Cluster)(data)
         end
     end
     anres = an(input, positional...; named...)
-    result[Symbol(name)] = map(nonnumeric, Clustering.assignments(anres))
-    return result
+    return [Symbol(name) => map(nonnumeric, Clustering.assignments(anres))]
 end

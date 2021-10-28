@@ -58,7 +58,6 @@ function (lm::LinearModel)(data)
     method_call = only(card.method.parsed)
     rename_call = only(card.rename.parsed)
 
-    result = to_littledict(data)
     predictors = ConstantTerm(1)
     for call in inputs_calls
         predictors += combinations(map(Symbol, call.positional))
@@ -76,8 +75,5 @@ function (lm::LinearModel)(data)
     end
     model = glm(formula, data, distribution, something(link, canonicallink(distribution)))
     anres = disallowmissing(predict(model, data)) # FIXME: support missing data in AoG
-    result[Symbol(pred_name)] = anres
-    result[Symbol(err_name)] = result[responsevariable] - anres
-
-    return result
+    return [Symbol(pred_name) => anres, Symbol(err_name) => data[responsevariable] - anres]
 end

@@ -54,7 +54,6 @@ function (dimres::DimensionalityReduction)(data)
     rename_call = only(card.rename.parsed)
     name = only(rename_call.positional)
 
-    result = to_littledict(data)
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
     X = reduce(vcat, transpose.(cols))
     kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(data, Symbol(v)), inputs_call.named)
@@ -69,8 +68,5 @@ function (dimres::DimensionalityReduction)(data)
         end
     end
     projected_data = project(an, X, positional...; named...)
-    for (i, col) in enumerate(eachrow(projected_data))
-        result[Symbol(join([name, i], '_'))] = col
-    end
-    return result
+    return [Symbol(join([name, i], '_')) => col for (i, col) in enumerate(eachrow(projected_data))]
 end

@@ -10,9 +10,9 @@ struct Process{T} <: AbstractPipeline{T}
     value::Observable{T}
 end
 
-compute_on_graph(input, steps, idx::Integer) = compute_on_graph(input, steps, idx:idx)
+compute_pipeline(input, cache, steps, idx::Integer) = compute_pipeline(input, cache, steps, idx:idx)
 
-function compute_on_graph(input, steps, idxs::AbstractVector{<:Integer}=eachindex(steps)) where {T}
+function compute_pipeline(input, cache, steps, idxs::AbstractVector{<:Integer}=eachindex(steps)) where {T}
     cards = [step.card for step in steps]
     columns_input = columns_in.(cards)
     columns_output = columns_out.(cards)
@@ -26,17 +26,21 @@ function compute_on_graph(input, steps, idxs::AbstractVector{<:Integer}=eachinde
     needs_updating = fill(false, N)
     needs_updating[idxs] .= true
     sorted = topological_sort_by_dfs(g)
-    current = input
+    result = to_littledict(input)
     for node in sorted
         for neighbor in inneighbors(g, node)
             needs_updating[node] |= needs_updating[neighbor]
         end
-        needs_updating[node] &= !isempty(columns_input[node])
-        if needs_updating[node]
-            current = steps[node](current)
+        # avoid running on empty cards
+        isempty(columns_input[node]) && continue
+        # if updating is needed, recompute, otherwise use old values
+        iter = needs_updating[node] ? steps[node](result) : [key => cache[key] for key in columns_output[node]]
+        for (key, val) in iter
+            haskey(result, key) && throw(ArgumentError("Overwriting table is not allowed"))
+            result[key] = val
         end
     end
-    return current
+    return result
 end
 
 function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
@@ -45,7 +49,7 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
     for (idx, step) in enumerate(steps)
         for button in (step.card.process_button, step.card.clear_button)
             on(button.value) do _
-                value[] = compute_on_graph(value[], steps, idx)
+                value[] = compute_pipeline(table[], value[], steps, idx)
             end
         end
     end
