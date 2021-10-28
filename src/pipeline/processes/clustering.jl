@@ -37,7 +37,7 @@ function (cluster::Cluster)(data)
     card = cluster.card
     inputs_call = only(card.inputs.parsed)
     method_call = only(card.method.parsed)
-    rename_call = only(card.method.rename)
+    rename_call = only(card.rename.parsed)
     name = only(rename_call.positional)
 
     dist = Euclidean() # TODO: make configurable

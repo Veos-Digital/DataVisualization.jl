@@ -38,7 +38,7 @@ function used_columns(args::AbstractVector{Call}...)
             append!(colnames, Symbol.(call.positional), Symbol.(last.(call.named)))
         end
     end
-    return callnames
+    return colnames
 end
 
 function columns_in(card::ProcessingCard)

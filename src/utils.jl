@@ -97,21 +97,3 @@ function filter_namedtuple(f, nt)
     names = filter(key -> f(nt[key]), keys(nt))
     return NamedTuple{names}(nt)
 end
-
-## Graph utils
-
-function compute_on_graph(g::SimpleDiGraph, input::T, functions::Vector, i::Int) where T
-    return compute_on_graph(g, input, functions, i:i)
-end
-
-function compute_on_graph(g::SimpleDiGraph, input::T, functions::Vector, idxs::AbstractVector{Int}=eachindex(outputs)) where T
-    needs_updating = fill(false, length(functions))
-    needs_updating[idxs] .= true
-    sorted = topological_sort_by_dfs(g)
-    for node in sorted
-        for neighbor in inneighbors(g, node)
-            needs_updating[node] |= needs_updating[neighbor]
-        end
-    end
-    return foldl(|>, functions[sorted[needs_updating]], init=input)
-end

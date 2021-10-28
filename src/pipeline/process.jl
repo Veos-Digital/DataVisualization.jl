@@ -10,28 +10,37 @@ struct Process{T} <: AbstractPipeline{T}
     value::Observable{T}
 end
 
-function Process(table::Observable{T}, components=(:Predict, :Cluster, :Project)) where {T}
-    steps = AbstractProcessingStep{T}[]
-    cards = [step.card for step in steps]
-    value = Observable(table[])
-    for component in components
-        step = getproperty(available_processing_steps, component)(value)
-        push!(steps, step)
-    end
+compute_on_graph(input, steps, idx::Integer) = compute_on_graph(input, steps, idx:idx)
 
-    for (idx, card) in enumerate(cards)
-        for button in (card.process_button, card.clear_button)
-            map!(value, button.value) do _
-                N = length(steps)
-                g = SimpleDiGraph(N)
-                columns_input = columns_in.(card)
-                columns_output = columns_out.(card)
-                for i in 1:N, j in 1:N
-                    if !isdisjoint(columns_input[j], columns_output[i])
-                        add_edge!(g, i, j)
-                    end
-                end
-                return compute_on_graph(g, table[], steps, idx)
+function compute_on_graph(input, steps, idx::AbstractVector{<:Integer}=eachindex(steps)) where {T}
+    cards = [step.card for step in steps]
+    columns_input = columns_in.(cards)
+    columns_output = columns_out.(cards)
+    N = length(steps)
+    g = SimpleDiGraph(N)
+    for i in 1:N, j in 1:N
+        if !isdisjoint(columns_input[j], columns_output[i])
+            add_edge!(g, i, j)
+        end
+    end
+    needs_updating = fill(false, N)
+    sorted = topological_sort_by_dfs(g)
+    for node in sorted
+        for neighbor in inneighbors(g, node)
+            needs_updating[node] |= needs_updating[neighbor]
+        end
+        needs_updating[node] &= !isempty(columns_input[node])
+    end
+    return foldl(|>, steps[sorted[needs_updating]], init=input)
+end
+
+function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
+    value = Observable(table[])
+    steps = AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys]
+    for (idx, step) in enumerate(steps)
+        for button in (step.card.process_button, step.card.clear_button)
+            on(button.value) do _
+                value[] = compute_on_graph(table[], steps, idx)
             end
         end
     end

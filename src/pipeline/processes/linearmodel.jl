@@ -56,7 +56,7 @@ function (lm::LinearModel)(data)
     inputs_calls = card.inputs.parsed
     output_call = only(card.output.parsed)
     method_call = only(card.method.parsed)
-    rename_call = only(card.method.rename)
+    rename_call = only(card.rename.parsed)
 
     result = to_littledict(data)
 
