@@ -168,6 +168,11 @@ function parse!(rtf::RichTextField)
     append!(rtf.parsed, compute_calls(rtf.widget.value[]))
 end
 
+function reset!(rtf::RichTextField)
+    rtf.widget.value[] = rtf.default
+    parse!(rtf)
+end
+
 function jsrender(session::Session, rtf::RichTextField)
     label = DOM.p(class="text-blue-800 text-xl font-semibold p-4 w-full text-left", rtf.name)
     ui = DOM.div(class="mb-4", label, DOM.div(class="pl-4", rtf.widget))

@@ -23,15 +23,10 @@ function ProcessingCard(name;
 
     card = ProcessingCard(name, inputs, output, method, rename, process_button, clear_button)
     on(clear_button.value) do _
-        for autocomplete in autocompletes(card)
-            autocomplete.value[] = ""
-            parse!(autocomplete)
-        end
+        foreach(reset!, autocompletes(card))
     end
     on(process_button.value) do _
-        for autocomplete in autocompletes(card)
-            parse!(autocomplete)
-        end
+        foreach(parse!, autocompletes(card))
     end
     return card
 end
