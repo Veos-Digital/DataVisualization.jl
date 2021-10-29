@@ -10,7 +10,10 @@ struct Process{T} <: AbstractPipeline{T}
     value::Observable{T}
 end
 
-nodes_to_compute(steps) = nodes_to_compute(step -> step.card.state[] != :done, steps)
+default_needs_update(step) = step.card.state[] != :done
+always_true(step) = true
+
+nodes_to_compute(steps) = nodes_to_compute(default_needs_update, steps)
 
 function nodes_to_compute(f, steps)
     cards = [step.card for step in steps]
@@ -35,8 +38,10 @@ function nodes_to_compute(f, steps)
     return nodes
 end
 
-function compute_pipeline(input, cache, steps)
-    nodes =  nodes_to_compute(steps)
+compute_pipeline(input, cache, steps) = compute_pipeline(default_needs_update, input, cache, steps)
+
+function compute_pipeline(f, input, cache, steps)
+    nodes =  nodes_to_compute(f, steps)
     result = to_littledict(input)
     for node in setdiff(1:length(steps), nodes)
         for key in columns_out(steps[node])
@@ -68,6 +73,13 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
                 # TODO: contemplate error case
                 step.card.state[] = :done
             end
+        end
+    end
+    on(table) do data
+        # TODO: contemplate error case
+        value[] = compute_pipeline(always_true, data, value[], steps)
+        for step in steps
+            step.card.state[] = :done
         end
     end
     return Process(table, Observable(steps), value)
