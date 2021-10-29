@@ -2,6 +2,9 @@ abstract type AbstractProcessingStep{T} end
 
 jsrender(session::Session, step::AbstractProcessingStep) = jsrender(session, step.card)
 
+columns_in(step::AbstractProcessingStep) = columns_in(step.card)
+columns_out(step::AbstractProcessingStep) = columns_out(step.card)
+
 struct ProcessingCard
     name::Symbol
     inputs::RichTextField
@@ -10,6 +13,7 @@ struct ProcessingCard
     rename::RichTextField
     process_button::Button
     clear_button::Button
+    state::Observable{Symbol}
 end
 
 function autocompletes(card::ProcessingCard)
@@ -19,14 +23,17 @@ end
 function ProcessingCard(name;
     inputs, output=nothing, method, rename,
     process_button=Button("Process", class=buttonclass(true)),
-    clear_button=Button("Clear", class=buttonclass(false)))
+    clear_button=Button("Clear", class=buttonclass(false)),
+    state=Observable(:done))
 
-    card = ProcessingCard(name, inputs, output, method, rename, process_button, clear_button)
+    card = ProcessingCard(name, inputs, output, method, rename, process_button, clear_button, state)
     on(clear_button.value) do _
         foreach(reset!, autocompletes(card))
+        card.state[] = :computing
     end
     on(process_button.value) do _
         foreach(parse!, autocompletes(card))
+        card.state[] = :computing
     end
     return card
 end
@@ -47,7 +54,7 @@ function columns_in(card::ProcessingCard)
 end
 
 function columns_out(card::ProcessingCard)
-    return used_columns(card.rename.parsed)
+    return isempty(columns_in(card)) ? Symbol[] : used_columns(card.rename.parsed)
 end
 
 function jsrender(session::Session, card::ProcessingCard)

@@ -10,9 +10,9 @@ struct Process{T} <: AbstractPipeline{T}
     value::Observable{T}
 end
 
-compute_pipeline(input, cache, steps, idx::Integer) = compute_pipeline(input, cache, steps, idx:idx)
+nodes_to_compute(steps) = nodes_to_compute(step -> step.card.state[] != :done, steps)
 
-function compute_pipeline(input, cache, steps, idxs::AbstractVector{<:Integer}=eachindex(steps)) where {T}
+function nodes_to_compute(f, steps)
     cards = [step.card for step in steps]
     columns_input = columns_in.(cards)
     columns_output = columns_out.(cards)
@@ -23,22 +23,36 @@ function compute_pipeline(input, cache, steps, idxs::AbstractVector{<:Integer}=e
             add_edge!(g, i, j)
         end
     end
-    needs_updating = fill(false, N)
-    needs_updating[idxs] .= true
     sorted = topological_sort_by_dfs(g)
-    result = to_littledict(input)
+    needs_updating = map(f, steps)
+    nodes = Int[]
     for node in sorted
         for neighbor in inneighbors(g, node)
             needs_updating[node] |= needs_updating[neighbor]
         end
-        # avoid running on empty cards
-        isempty(columns_input[node]) && continue
-        # if updating is needed, recompute, otherwise use old values
-        iter = needs_updating[node] ? steps[node](result) : [key => cache[key] for key in columns_output[node]]
-        for (key, val) in iter
+        needs_updating[node] && push!(nodes, node)
+    end
+    return nodes
+end
+
+function compute_pipeline(input, cache, steps)
+    nodes =  nodes_to_compute(steps)
+    result = to_littledict(input)
+    for node in setdiff(1:length(steps), nodes)
+        for key in columns_out(steps[node])
             haskey(result, key) && throw(ArgumentError("Overwriting table is not allowed"))
-            result[key] = val
+            result[key] = cache[key]
         end
+    end
+    for node in nodes
+        step = steps[node]
+        if !isempty(columns_in(step))
+            mergewith!(result, step(result)) do _, _
+                throw(ArgumentError("Overwriting table is not allowed"))
+            end
+        end
+        # TODO: add `:errored` state if the above fails
+        step.card.state[] = :done
     end
     return result
 end
@@ -46,10 +60,12 @@ end
 function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
     value = Observable(table[])
     steps = AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys]
-    for (idx, step) in enumerate(steps)
-        for button in (step.card.process_button, step.card.clear_button)
-            on(button.value) do _
-                value[] = compute_pipeline(table[], value[], steps, idx)
+    for step in steps
+        on(step.card.state) do state
+            if state != :done
+                value[] = compute_pipeline(table[], value[], steps)
+                # TODO: contemplate error case
+                step.card.state[] = :done
             end
         end
     end

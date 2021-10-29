@@ -68,5 +68,6 @@ function (dimres::DimensionalityReduction)(data)
         end
     end
     projected_data = project(an, X, positional...; named...)
-    return [Symbol(join([name, i], '_')) => col for (i, col) in enumerate(eachrow(projected_data))]
+    rows = eachrow(projected_data)
+    return LittleDict([Symbol(join([name, i], '_')) for i in eachindex(rows)], rows)
 end
