@@ -53,6 +53,7 @@ function columns_in(card::ProcessingCard)
     return used_columns(args...)
 end
 
+# FIXME: this is wrong for `PCA` & co.
 function columns_out(card::ProcessingCard)
     return isempty(columns_in(card)) ? Symbol[] : used_columns(card.rename.parsed)
 end

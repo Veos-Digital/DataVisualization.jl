@@ -61,6 +61,7 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
     value = Observable(table[])
     steps = AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys]
     for step in steps
+        # May be safer to have separate `Observable`s controlling this
         on(step.card.state) do state
             if state != :done
                 value[] = compute_pipeline(table[], value[], steps)
