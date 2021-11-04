@@ -59,6 +59,11 @@ function columns_out(card::ProcessingCard)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
-    ui = DOM.div(autocompletes(card)..., DOM.div(class="mt-12 mb-16 pl-4", card.process_button, card.clear_button))
+    ui = DOM.div(
+        DOM.h2(string(card.name), class="text-blue-800 text-2xl font-semibold rounded"),
+        autocompletes(card)...,
+        DOM.div(class="mt-12", card.process_button, card.clear_button),
+        class="p-8 shadow bg-white mb-12"
+    )
     return jsrender(session, ui)
 end
