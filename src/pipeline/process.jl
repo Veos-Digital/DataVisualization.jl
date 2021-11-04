@@ -64,6 +64,7 @@ end
 function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
     value = Observable(table[])
     steps = AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys]
+    steps_container = Observable(steps)
     for step in steps
         # May be safer to have separate `Observable`s controlling this
         on(step.card.state) do state
@@ -71,6 +72,13 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
                 value[] = compute_pipeline(table[], value[], steps)
                 # TODO: contemplate error case
                 step.card.state[] = :done
+            end
+        end
+        on(step.card.destroy) do val
+            if val
+                id = objectid(step)
+                filter!(!=(id)∘objectid, steps)
+                notify!(steps_container)
             end
         end
     end
@@ -81,7 +89,7 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
             step.card.state[] = :done
         end
     end
-    return Process(table, Observable(steps), value)
+    return Process(table, steps_container, value)
 end
 
 function jsrender(session::Session, process::Process)
