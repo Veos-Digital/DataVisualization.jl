@@ -16,9 +16,8 @@ always_true(step) = true
 nodes_to_compute(steps) = nodes_to_compute(default_needs_update, steps)
 
 function nodes_to_compute(f, steps)
-    cards = [step.card for step in steps]
-    columns_input = columns_in.(cards)
-    columns_output = columns_out.(cards)
+    columns_input = columns_in.(steps)
+    columns_output = columns_out.(steps)
     N = length(steps)
     g = SimpleDiGraph(N)
     for i in 1:N, j in 1:N
