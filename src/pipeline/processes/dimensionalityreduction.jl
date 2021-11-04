@@ -1,20 +1,37 @@
-struct DimensionalityReduction{T} <: AbstractPipeline{T}
+struct DimensionalityReduction{T} <: AbstractProcessingStep{T}
     table::Observable{T}
-    value::Observable{T}
+    card::ProcessingCard
 end
 
-DimensionalityReduction(table::Observable{T}) where {T} =
-    DimensionalityReduction{T}(table, Observable{T}(table[]))
+function columns_out(step::DimensionalityReduction)
+    card = step.card
+    output_names = columns_out(card)
+    isempty(output_names) && return Symbol[]
+    basename = only(output_names)
+    method_call = only(card.method.parsed)
+    dims = nothing
+    for (k, v) in method_call.named
+        k == "dims" && (dims = parse(Int, v))
+    end
+    return isnothing(dims) ? Symbol[] : [Symbol(basename, "_", i) for i in 1:dims]
+end
 
-function project(an, data, args...; kwargs...)
-    anres = fit(an, data, args...; kwargs...)
+# Add custom type to represent multi-dimensional scaling
+struct MDS end
+
+# Unify interface on how to pass dims
+_fit(::Type{PCA}, X; dims, kwargs...) = fit(PCA, X; maxoutdim=dims, pratio=1, kwargs...)
+_fit(::Type{PPCA}, X; dims, kwargs...) = fit(PPCA, X; maxoutdim=dims, kwargs...)
+_fit(::Type{FactorAnalysis}, X; dims, kwargs...) = fit(FactorAnalysis, X; maxoutdim=dims, kwargs...)
+_fit(::Type{ICA}, X; dims, kwargs...) = fit(ICA, X, dims; kwargs...)
+
+function project(an, data; dims, kwargs...)
+    anres = _fit(an, data; dims, kwargs...)
     return transform(anres, data)
 end
 
-struct MDS end
-
-function project(::Type{MDS}, data, args...; distance=Euclidean(), kwargs...)
-    return classical_mds(pairwise(distance, data, dims=2), args...; kwargs...)
+function project(::Type{MDS}, data; dims, distance=Euclidean(), kwargs...)
+    return classical_mds(pairwise(distance, data, dims=2), dims; kwargs...)
 end
 
 const dimensionalityreductions = (
@@ -25,80 +42,49 @@ const dimensionalityreductions = (
     mds=MDS,
 )
 
-function jsrender(session::Session, dimres::DimensionalityReduction)
+function DimensionalityReduction(table::Observable)
 
     analysis_names = collect(map(string, keys(dimensionalityreductions)))
 
-    wdgs = LittleDict()
-
-    wdgs["Inputs"] = Autocomplete(session, Observable(""), data_options(session, dimres.table, keywords=[""]))
-
     analysis_options = vecmap(analysis_names) do name
-        if name in ("mds", "ica")
-            name * " dims" => [string(i) for i in 1:100]
-        else
-            name => String[]
-        end
+        return name * " dims" => [string(i) for i in 1:100]
     end
     pushfirst!(analysis_options, "+" => String[])
 
-    wdgs["Output"] = Autocomplete(session, Observable(""), analysis_options)
-
     default_names = ":projection"
 
-    wdgs["Rename"] = Autocomplete(session, Observable(default_names), ["" => ["projection"]])
+    wdgs = (
+        inputs=RichTextField("Inputs", data_options(table, keywords=[""]), ""),
+        method=RichTextField("Method", analysis_options, ""),
+        rename=RichTextField("Rename", ["" => ["projection"]], default_names)
+    )
 
-    tryon(session, dimres.table) do table
-        dimres.value[] = table
-    end
+    card = ProcessingCard(:Project; wdgs...)
+    return DimensionalityReduction(table, card)
+end
 
-    process_button = Button("Process", class=buttonclass(true))
-    clear_button = Button("Clear", class=buttonclass(false))
+# TODO: force user to specify `dims`
 
-    tryon(session, process_button.value) do _
-        local table = dimres.table[]
-        result = to_littledict(table)
-        inputs_call = only(compute_calls(wdgs["Inputs"].value[]))
-        cols = Tables.getcolumn.(Ref(table), Symbol.(inputs_call.positional))
-        X = reduce(vcat, transpose.(cols))
-        kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(table, Symbol(v)), inputs_call.named)
-        method_call = only(compute_calls(wdgs["Method"].value[]))
-        rename_call = only(compute_calls(wdgs["Rename"].value[]))
+function (dimres::DimensionalityReduction)(data)
+    card = dimres.card
+    inputs_call = only(card.inputs.parsed)
+    method_call = only(card.method.parsed)
+    rename_call = only(card.rename.parsed)
+    name = only(rename_call.positional)
 
-        name = only(rename_call.positional)
-
-        an = dimensionalityreductions[Symbol(only(method_call.fs))]
-        positional, named = [], collect(Pair, kws)
-        for (k, v) in method_call.named
-            if an in (ICA, MDS) && k == "dims"
-                push!(positional, parse(Int, v))
-            else
-                push!(named, Symbol(k) => v)
-            end
+    cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
+    X = reduce(vcat, transpose.(cols))
+    options = Pair{Symbol, Any}[Symbol(k) => Tables.getcolumn(data, Symbol(v)) for (k, v) in inputs_call.named]
+    for (k, v) in method_call.named
+        if k == "dims"
+            push!(options, :dims => parse(Int, v))
+        else
+            push!(options, Symbol(k) => v)
         end
-        projected_data = project(an, X, positional...; named...)
-        for (i, col) in enumerate(eachrow(projected_data))
-            result[Symbol(join([name, i], '_'))] = col
-        end
-
-        dimres.value[] = result
     end
 
-    tryon(session, clear_button.value) do _
-        dimres.value[] = dimres.table[]
-        for wdg in values(wdgs)
-            wdg[].value[] = ""
-        end
-        wdgs["Rename"].value[] = default_names
-    end
-
-    widgets = Iterators.map(pairs(wdgs)) do (name, textbox)
-        label = DOM.p(class="text-blue-800 text-xl font-semibold p-4 w-full text-left", name)
-        class = name == foldl((_, k) -> k, keys(wdgs)) ? "" : "mb-4"
-        return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
-    end
-
-    ui = DOM.div(widgets..., DOM.div(class="mt-12 mb-16 pl-4", process_button, clear_button))
-
-    return jsrender(session, ui)
+    an = dimensionalityreductions[Symbol(only(method_call.fs))]
+    projected_data = project(an, X; options...)
+    rows = eachrow(projected_data)
+    return LittleDict(Symbol(name, '_', i) => row for (i, row) in enumerate(rows))
 end

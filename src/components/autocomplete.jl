@@ -1,7 +1,7 @@
 const AutocompleteOptions = Vector{Tuple{String, Vector{String}}}
 
-to_autcomplete_options(options::Union{AbstractArray, Tuple}) = vecmap(Tuple, options)
-to_autcomplete_options(options::AbstractDict) = [Tuple(p) for p in pairs(options)]
+to_autocomplete_options(options::Union{AbstractArray, Tuple}) = vecmap(Tuple, options)
+to_autocomplete_options(options::AbstractDict) = [Tuple(p) for p in pairs(options)]
 
 struct Autocomplete
     value::Observable{String}
@@ -9,16 +9,9 @@ struct Autocomplete
 end
 
 function Autocomplete(value::Observable, options′)
-    options = Observable(to_autcomplete_options(options′))
+    options = Observable(to_autocomplete_options(options′))
     return Autocomplete(value, options)
 end
-
-function Autocomplete(session::Session, value::Observable, options′::Observable)
-    options = map(to_autcomplete_options, session, options′; result=Observable{AutocompleteOptions}())
-    return Autocomplete(value, options)
-end
-
-Autocomplete(session::Session, value::Observable, options′) = Autocomplete(value, options′)
 
 function autocomplete_script(options::Observable{AutocompleteOptions})
     return js"""
@@ -110,7 +103,7 @@ function jsrender(session::Session, wdg::Autocomplete)
         function (value) {
             const res = ($(script)(value));
             const list = $(list);
-            for (let i = list.childNodes.length; i >= res.keys.length; i--) {
+            while (list.childNodes.length > res.keys.length) {
                 list.removeChild(list.lastChild);
             }
             for (let i = 0; i < res.keys.length; i++) {
@@ -143,4 +136,38 @@ function jsrender(session::Session, wdg::Autocomplete)
     """)
 
     return jsrender(session, div)
+end
+
+struct RichTextField
+    name::String
+    widget::Autocomplete
+    default::String
+    parsed::Vector{Call}
+end
+
+function RichTextField(name, widget::Autocomplete, default)
+    rtf = RichTextField(name, widget, default, Call[])
+    parse!(rtf)
+    return rtf
+end
+
+function RichTextField(name, options, default)
+    wdg = Autocomplete(Observable(default), lift(to_autocomplete_options, convert(Observable, options)))
+    return RichTextField(name, wdg, default)
+end
+
+function parse!(rtf::RichTextField)
+    empty!(rtf.parsed)
+    append!(rtf.parsed, compute_calls(rtf.widget.value[]))
+end
+
+function reset!(rtf::RichTextField)
+    rtf.widget.value[] = rtf.default
+    parse!(rtf)
+end
+
+function jsrender(session::Session, rtf::RichTextField)
+    label = DOM.p(class="text-blue-800 text-xl font-semibold p-4 w-full text-left", rtf.name)
+    ui = DOM.div(class="mb-4", label, DOM.div(class="pl-4", rtf.widget))
+    return jsrender(session, ui)
 end

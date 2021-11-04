@@ -75,8 +75,9 @@ function style_options(names)
 end
 
 function specs_options(session::Session, specs::PlotSpecs; name)
-    return map(session, specs.names) do names
-        return name == :layers ? [layers_options(); style_options(names)] : style_options(names)
+    return map(session, specs.names; result=Observable{AutocompleteOptions}()) do names
+        options = name == :layers ? [layers_options(); style_options(names)] : style_options(names)
+        return to_autocomplete_options(options)
     end
 end
 
@@ -87,7 +88,7 @@ function jsrender(session::Session, specs::PlotSpecs)
             uppercasefirst(string(name))
         )
         options = specs_options(session, specs; name)
-        textbox = jsrender(session, Autocomplete(session, getproperty(specs, name), options))
+        textbox = jsrender(session, Autocomplete(getproperty(specs, name), options))
         class = name == :layers ? "" : "mb-4"
         return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
     end

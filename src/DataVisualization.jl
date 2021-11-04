@@ -22,6 +22,7 @@ using MultivariateStats: PCA,
                          classical_mds,
                          transform
 using OrderedCollections
+using Graphs: SimpleDiGraph, add_edge!, inneighbors, topological_sort_by_dfs
 using Distances: Euclidean, pairwise
 using Clustering
 using GLM, StatsModels
@@ -66,6 +67,7 @@ include("components/tabular.jl")
 include("components/autocomplete.jl")
 include("components/filters.jl")
 include("components/plotspecs.jl")
+include("components/processing_card.jl")
 include("pipeline/processes/linearmodel.jl")
 include("pipeline/processes/clustering.jl")
 include("pipeline/processes/dimensionalityreduction.jl")
