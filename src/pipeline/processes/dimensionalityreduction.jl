@@ -3,15 +3,22 @@ struct DimensionalityReduction{T} <: AbstractProcessingStep{T}
     card::ProcessingCard
 end
 
-function project(an, data, args...; kwargs...)
-    anres = fit(an, data, args...; kwargs...)
+# Add custom type to represent multi-dimensional scaling
+struct MDS end
+
+# Unify interface on how to pass dims
+_fit(::Type{PCA}, X; dims, kwargs...) = fit(PCA, X; maxoutdim=dims, pratio=1, kwargs...)
+_fit(::Type{PPCA}, X; dims, kwargs...) = fit(PPCA, X; maxoutdim=dims, kwargs...)
+_fit(::Type{FactorAnalysis}, X; dims, kwargs...) = fit(FactorAnalysis, X; maxoutdim=dims, kwargs...)
+_fit(::Type{ICA}, X; dims, kwargs...) = fit(ICA, X, dims; kwargs...)
+
+function project(an, data; dims, kwargs...)
+    anres = _fit(an, data; dims, kwargs...)
     return transform(anres, data)
 end
 
-struct MDS end
-
-function project(::Type{MDS}, data, args...; distance=Euclidean(), kwargs...)
-    return classical_mds(pairwise(distance, data, dims=2), args...; kwargs...)
+function project(::Type{MDS}, data; dims, distance=Euclidean(), kwargs...)
+    return classical_mds(pairwise(distance, data, dims=2), dims; kwargs...)
 end
 
 const dimensionalityreductions = (
@@ -27,11 +34,7 @@ function DimensionalityReduction(table::Observable)
     analysis_names = collect(map(string, keys(dimensionalityreductions)))
 
     analysis_options = vecmap(analysis_names) do name
-        if name in ("mds", "ica")
-            name * " dims" => [string(i) for i in 1:100]
-        else
-            name => String[]
-        end
+        return name * " dims" => [string(i) for i in 1:100]
     end
     pushfirst!(analysis_options, "+" => String[])
 
@@ -47,6 +50,8 @@ function DimensionalityReduction(table::Observable)
     return DimensionalityReduction(table, card)
 end
 
+# TODO: force user to specify `dims`
+
 function (dimres::DimensionalityReduction)(data)
     card = dimres.card
     inputs_call = only(card.inputs.parsed)
@@ -56,18 +61,17 @@ function (dimres::DimensionalityReduction)(data)
 
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
     X = reduce(vcat, transpose.(cols))
-    kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(data, Symbol(v)), inputs_call.named)
-
-    an = dimensionalityreductions[Symbol(only(method_call.fs))]
-    positional, named = [], collect(Pair, kws)
+    options = Pair{Symbol, Any}[Symbol(k) => Tables.getcolumn(data, Symbol(v)) for (k, v) in inputs_call.named]
     for (k, v) in method_call.named
-        if an in (ICA, MDS) && k == "dims"
-            push!(positional, parse(Int, v))
+        if k == "dims"
+            push!(options, :dims => parse(Int, v))
         else
-            push!(named, Symbol(k) => v)
+            push!(options, Symbol(k) => v)
         end
     end
-    projected_data = project(an, X, positional...; named...)
+
+    an = dimensionalityreductions[Symbol(only(method_call.fs))]
+    projected_data = project(an, X; options...)
     rows = eachrow(projected_data)
-    return LittleDict([Symbol(join([name, i], '_')) for i in eachindex(rows)], rows)
+    return LittleDict(Symbol(join([name, i], '_')) => row for (i, row) in enumerate(rows))
 end
