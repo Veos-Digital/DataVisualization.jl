@@ -3,6 +3,19 @@ struct DimensionalityReduction{T} <: AbstractProcessingStep{T}
     card::ProcessingCard
 end
 
+function columns_out(step::DimensionalityReduction)
+    card = step.card
+    output_names = columns_out(card)
+    isempty(output_names) && return Symbol[]
+    basename = only(output_names)
+    method_call = only(card.method.parsed)
+    dims = nothing
+    for (k, v) in method_call.named
+        k == "dims" && (dims = parse(Int, v))
+    end
+    return isnothing(dims) ? Symbol[] : [Symbol(basename, "_", i) for i in 1:dims]
+end
+
 # Add custom type to represent multi-dimensional scaling
 struct MDS end
 
@@ -73,5 +86,5 @@ function (dimres::DimensionalityReduction)(data)
     an = dimensionalityreductions[Symbol(only(method_call.fs))]
     projected_data = project(an, X; options...)
     rows = eachrow(projected_data)
-    return LittleDict(Symbol(join([name, i], '_')) => row for (i, row) in enumerate(rows))
+    return LittleDict(Symbol(name, '_', i) => row for (i, row) in enumerate(rows))
 end
