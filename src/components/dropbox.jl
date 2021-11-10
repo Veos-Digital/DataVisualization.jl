@@ -16,19 +16,33 @@ end
 struct DraggableList{T}
     steps::Observable{Vector{T}}
     list::Observable{Vector{Any}}
+    selected::Observable{Int}
+end
+
+function add_callbacks!(dropbox::Dropbox, dl::DraggableList)
+    on(dropbox.dropped) do _
+        list = dl.list[]
+        id = objectid(dropbox)
+        idx = findfirst(==(id)∘objectid, list)
+        dl.selected[] = count(x -> x isa Dropbox, view(list, 1:idx))
+    end
+    return dropbox
 end
 
 function DraggableList(steps::Observable{Vector{T}}) where {T}
-    list = lift(steps) do steps
+    selected = Observable(0)
+    list = Observable{Vector{Any}}()
+    dl = DraggableList(steps, list, selected)
+    map!(list, steps) do steps
         elements = Any[]
-        push!(elements, Dropbox())
+        push!(elements, add_callbacks!(Dropbox(), dl))
         for step in steps
             push!(elements, step)
-            push!(elements, Dropbox())
+            push!(elements, add_callbacks!(Dropbox(), dl))
         end
         return elements
     end
-    return DraggableList(steps, list)
+    return DraggableList(steps, list, selected)
 end
 
 function jsrender(session::Session, dl::DraggableList)
