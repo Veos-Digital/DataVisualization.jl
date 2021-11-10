@@ -32,5 +32,6 @@ function DraggableList(steps::Observable{Vector{T}}) where {T}
 end
 
 function jsrender(session::Session, dl::DraggableList)
-    return jsrender(session, dl.list)
+    ui = map(DOM.div, session, dl.list)
+    return jsrender(session, ui)
 end

@@ -104,11 +104,9 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
 end
 
 function jsrender(session::Session, process::Process)
-    ui = map(session, process.steps) do steps
-        return DOM.div(
-            steps;
-            scrollablecomponent...
-        )
-    end
+    ui = DOM.div(
+        process.list;
+        scrollablecomponent...
+    )
     return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end
