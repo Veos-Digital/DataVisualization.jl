@@ -65,22 +65,23 @@ function compute_pipeline(f, input, cache, steps)
     return result
 end
 
-function add_callbacks!(step::AbstractProcessingStep, table, value, steps_container)
+function add_callbacks!(step::AbstractProcessingStep, process::Process)
+    table, value, steps = process.table, process.value, process.list.steps
     card = step.card
     # May be safer to have separate `Observable`s controlling this
     on(card.state) do state
         if state != :done
-            value[] = compute_pipeline(table[], value[], steps_container[])
+            value[] = compute_pipeline(table[], value[], steps[])
             # TODO: contemplate error case
             card.state[] = :done
         end
     end
     on(card.destroy) do val
-        steps = steps_container[]
+        _steps = steps[]
         if val
             id = objectid(step)
-            idx = findfirst(==(id)∘objectid, steps)
-            isnothing(idx) || (steps_container[] = remove_item(steps, idx))
+            idx = findfirst(==(id)∘objectid, _steps)
+            isnothing(idx) || (steps[] = remove_item(_steps, idx))
             # TODO: clear card before destroying!
         end
     end
@@ -88,19 +89,20 @@ end
 
 function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
     value = Observable(table[])
-    steps = AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys]
-    steps_container = Observable(steps)
-    for step in steps
-        add_callbacks!(step, table, value, steps_container)
+    steps = Observable(AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys])
+    process = Process(table, steps, value)
+    for step in steps[]
+        add_callbacks!(step, process)
     end
     on(table) do data
+        _steps = steps[]
         # TODO: contemplate error case
-        value[] = compute_pipeline(always_true, data, value[], steps_container[])
-        for step in steps_container[]
+        value[] = compute_pipeline(always_true, data, value[], _steps)
+        for step in _steps
             step.card.state[] = :done
         end
     end
-    return Process(table, steps_container, value)
+    return process
 end
 
 function jsrender(session::Session, process::Process)
