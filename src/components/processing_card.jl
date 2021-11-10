@@ -14,6 +14,7 @@ struct ProcessingCard
     process_button::Button
     clear_button::Button
     state::Observable{Symbol}
+    dragging::Observable{Bool}
     destroy::Observable{Bool}
 end
 
@@ -22,13 +23,29 @@ function autocompletes(card::ProcessingCard)
 end
 
 function ProcessingCard(name;
-    inputs, output=nothing, method, rename,
-    process_button=Button("Process", class=buttonclass(true)),
-    clear_button=Button("Clear", class=buttonclass(false)),
-    state=Observable(:done),
-    destroy = Observable(false))
+                        inputs,
+                        output=nothing,
+                        method,
+                        rename,
+                        process_button=Button("Process", class=buttonclass(true)),
+                        clear_button=Button("Clear", class=buttonclass(false)),
+                        state=Observable(:done),
+                        dragging=Observable(false),
+                        destroy = Observable(false))
 
-    card = ProcessingCard(name, inputs, output, method, rename, process_button, clear_button, state, destroy)
+    card = ProcessingCard(
+        name,
+        inputs,
+        output,
+        method,
+        rename,
+        process_button,
+        clear_button,
+        state,
+        dragging,
+        destroy
+    )
+
     on(clear_button.value) do _
         foreach(reset!, autocompletes(card))
         card.state[] = :computing
@@ -61,7 +78,6 @@ function columns_out(card::ProcessingCard)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
-    push!(session, card.destroy)
     ui = DOM.div(
         DOM.span(string(card.name), class="text-blue-800 text-2xl font-semibold"),
         DOM.span(
@@ -71,7 +87,10 @@ function jsrender(session::Session, card::ProcessingCard)
         ),
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
-        class="p-8 shadow bg-white mb-12"
+        class="p-8 shadow bg-white mb-12",
+        draggable=true,
+        ondragstart=js"JSServe.update_obs($(card.dragging), true)",
+        ondragend=js"JSServe.update_obs($(card.dragging), false)",
     )
     return jsrender(session, ui)
 end

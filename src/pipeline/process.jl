@@ -61,31 +61,38 @@ function compute_pipeline(f, input, cache, steps)
     return result
 end
 
+function add_callbacks!(step::AbstractProcessingStep, table, value, steps_container)
+    card = step.card
+    # May be safer to have separate `Observable`s controlling this
+    on(card.state) do state
+        if state != :done
+            value[] = compute_pipeline(table[], value[], steps_container[])
+            # TODO: contemplate error case
+            card.state[] = :done
+        end
+    end
+    on(card.destroy) do val
+        steps = steps_container[]
+        if val
+            id = objectid(step)
+            idx = findfirst(==(id)∘objectid, steps)
+            isnothing(idx) || (steps_container[] = remove_item(steps, idx))
+            # TODO: clear card before destroying!
+        end
+    end
+end
+
 function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
     value = Observable(table[])
     steps = AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys]
     steps_container = Observable(steps)
     for step in steps
-        # May be safer to have separate `Observable`s controlling this
-        on(step.card.state) do state
-            if state != :done
-                value[] = compute_pipeline(table[], value[], steps)
-                # TODO: contemplate error case
-                step.card.state[] = :done
-            end
-        end
-        on(step.card.destroy) do val
-            if val
-                id = objectid(step)
-                filter!(!=(id)∘objectid, steps)
-                notify!(steps_container)
-            end
-        end
+        add_callbacks!(step, table, value, steps_container)
     end
     on(table) do data
         # TODO: contemplate error case
-        value[] = compute_pipeline(always_true, data, value[], steps)
-        for step in steps
+        value[] = compute_pipeline(always_true, data, value[], steps_container[])
+        for step in steps_container[]
             step.card.state[] = :done
         end
     end

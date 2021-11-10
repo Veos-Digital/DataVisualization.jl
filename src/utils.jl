@@ -97,3 +97,26 @@ function filter_namedtuple(f, nt)
     names = filter(key -> f(nt[key]), keys(nt))
     return NamedTuple{names}(nt)
 end
+
+function move_item(v, (old, new))
+    return map(1:length(v)) do i
+        i == new && return v[old]
+        old ≤ i ≤ new && return v[i+1]
+        old ≥ i ≥ new && return v[i-1]
+        return v[i]
+    end
+end
+
+function remove_item(v, idx)
+    return map(1:length(v)-1) do i
+        return i < idx ? v[i] : v[i+1]
+    end
+end
+
+function insert_item(v, idx, value)
+    return map(1:length(v)+1) do i
+        i < idx && return v[i]
+        i > idx && return v[i-1]
+        return value
+    end
+end
