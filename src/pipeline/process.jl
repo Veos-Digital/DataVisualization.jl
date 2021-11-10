@@ -6,8 +6,12 @@ const available_processing_steps = (
 
 struct Process{T} <: AbstractPipeline{T}
     table::Observable{T}
-    steps::Observable{Vector{AbstractProcessingStep{T}}}
+    list::DraggableList{AbstractProcessingStep{T}}
     value::Observable{T}
+end
+
+function Process(table::Observable{T}, steps::Observable{Vector{AbstractProcessingStep{T}}}, value::Observable{T}) where T
+    return Process(table, DraggableList(steps), value)
 end
 
 default_needs_update(step) = step.card.state[] != :done

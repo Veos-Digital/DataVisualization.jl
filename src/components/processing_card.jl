@@ -87,7 +87,7 @@ function jsrender(session::Session, card::ProcessingCard)
         ),
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
-        class="p-8 shadow bg-white mb-12",
+        class="p-8 shadow bg-white",
         draggable=true,
         ondragstart=js"JSServe.update_obs($(card.dragging), true)",
         ondragend=js"JSServe.update_obs($(card.dragging), false)",
