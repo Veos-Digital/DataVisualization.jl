@@ -78,6 +78,7 @@ function columns_out(card::ProcessingCard)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
+    hash = string(objectid(card))
     ui = DOM.div(
         DOM.span(string(card.name), class="text-blue-800 text-2xl font-semibold"),
         DOM.span(
@@ -92,7 +93,7 @@ function jsrender(session::Session, card::ProcessingCard)
         draggable=true,
         onmousedown=js"this.style.cursor='grabbing';",
         onmouseup=js"this.style.cursor='grab';",
-        ondragstart=js"JSServe.update_obs($(card.dragging), true)",
+        ondragstart=js"event.dataTransfer.setData('text/plain', $(hash)); JSServe.update_obs($(card.dragging), true)",
         ondragend=js"JSServe.update_obs($(card.dragging), false); this.style.cursor='grab';",
     )
     return jsrender(session, ui)

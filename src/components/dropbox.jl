@@ -1,12 +1,12 @@
 struct Dropbox
-    dropped::Observable{Bool}
+    dropped::Observable{String}
 end
 
-Dropbox() = Dropbox(Observable(false))
+Dropbox() = Dropbox(Observable(""))
 
 function jsrender(session::Session, db::Dropbox)
     dragoverclass = "bg-gray-200"
-    ondrop = js"JSServe.update_obs($(db.dropped), true); this.classList.remove($(dragoverclass));"
+    ondrop = js"JSServe.update_obs($(db.dropped), event.dataTransfer.getData('text')); this.classList.remove($(dragoverclass));"
     ondragover = js"event.preventDefault();"
     ondragenter = js"event.preventDefault(); this.classList.add($(dragoverclass));"
     ondragleave = js"event.preventDefault(); this.classList.remove($(dragoverclass));"
@@ -21,11 +21,20 @@ struct DraggableList{T}
 end
 
 function add_callbacks!(dropbox::Dropbox, dl::DraggableList)
-    on(dropbox.dropped) do _
+    on(dropbox.dropped) do hash
         list = dl.list[]
         id = objectid(dropbox)
         idx = findfirst(==(id)∘objectid, list)
-        dl.selected[] = count(x -> x isa Dropbox, view(list, 1:idx))
+        _selected = count(x -> x isa Dropbox, view(list, 1:idx))
+        dl.selected[] = _selected
+        _steps = dl.steps[]
+        for (idx, step) in enumerate(_steps)
+            if string(objectid(step.card)) == hash
+                old = idx
+                new = _selected - (_selected > old)
+                dl.steps[] = move_item(_steps, old => new)
+            end
+        end
     end
     return dropbox
 end
