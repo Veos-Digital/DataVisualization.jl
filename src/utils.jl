@@ -90,7 +90,7 @@ end
 
 const scrollablecomponent = (
     class="pr-16",
-    style="overflow-y:scroll; max-height: 80vh;"
+    style="overflow-y:scroll; max-height: 80vh;" # FIXME: add to tailwind config https://tailwindcss.com/docs/max-height#max-height-scale
 )
 
 function filter_namedtuple(f, nt)

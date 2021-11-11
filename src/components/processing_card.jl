@@ -88,9 +88,12 @@ function jsrender(session::Session, card::ProcessingCard)
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
         class="p-8 shadow bg-white",
+        style="cursor: grab;", # FIXME: add to tailwind config https://github.com/tailwindlabs/tailwindcss/issues/1391
         draggable=true,
+        onmousedown=js"this.style.cursor='grabbing';",
+        onmouseup=js"this.style.cursor='grab';",
         ondragstart=js"JSServe.update_obs($(card.dragging), true)",
-        ondragend=js"JSServe.update_obs($(card.dragging), false)",
+        ondragend=js"JSServe.update_obs($(card.dragging), false); this.style.cursor='grab';",
     )
     return jsrender(session, ui)
 end
