@@ -7,9 +7,9 @@ Dropbox() = Dropbox(Observable(false))
 function jsrender(session::Session, db::Dropbox)
     dragoverclass = "bg-gray-200"
     ondrop = js"JSServe.update_obs($(db.dropped), true); this.classList.remove($(dragoverclass));"
-    ondragover = js"event.preventDefault(); event.dataTransfer.dropEffect = 'move';"
-    ondragenter = js"this.classList.add($(dragoverclass));"
-    ondragleave = js"this.classList.remove($(dragoverclass));"
+    ondragover = js"event.preventDefault();"
+    ondragenter = js"event.preventDefault(); this.classList.add($(dragoverclass));"
+    ondragleave = js"event.preventDefault(); this.classList.remove($(dragoverclass));"
     ui = DOM.div(; class="py-6", ondragenter, ondragleave, ondragover, ondrop)
     return jsrender(session, ui)
 end
