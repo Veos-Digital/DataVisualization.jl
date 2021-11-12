@@ -14,7 +14,7 @@ struct ProcessingCard
     process_button::Button
     clear_button::Button
     state::Observable{Symbol}
-    dragging::Observable{Bool}
+    selected::Observable{Bool}
     destroy::Observable{Bool}
 end
 
@@ -30,7 +30,7 @@ function ProcessingCard(name;
                         process_button=Button("Process", class=buttonclass(true)),
                         clear_button=Button("Clear", class=buttonclass(false)),
                         state=Observable(:done),
-                        dragging=Observable(false),
+                        selected=Observable(false),
                         destroy = Observable(false))
 
     card = ProcessingCard(
@@ -42,7 +42,7 @@ function ProcessingCard(name;
         process_button,
         clear_button,
         state,
-        dragging,
+        selected,
         destroy
     )
 
@@ -72,13 +72,11 @@ function columns_in(card::ProcessingCard)
     return used_columns(args...)
 end
 
-# FIXME: this is wrong for `PCA` & co.
 function columns_out(card::ProcessingCard)
     return isempty(columns_in(card)) ? Symbol[] : used_columns(card.rename.parsed)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
-    hash = string(objectid(card))
     ui = DOM.div(
         DOM.span(string(card.name), class="text-blue-800 text-2xl font-semibold"),
         DOM.span(
@@ -88,13 +86,21 @@ function jsrender(session::Session, card::ProcessingCard)
         ),
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
-        class="p-8 shadow bg-white",
-        style="cursor: grab;", # FIXME: add to tailwind config https://github.com/tailwindlabs/tailwindcss/issues/1391
-        draggable=true,
-        onmousedown=js"this.style.cursor='grabbing';",
-        onmouseup=js"this.style.cursor='grab';",
-        ondragstart=js"event.dataTransfer.setData('text/plain', $(hash)); JSServe.update_obs($(card.dragging), true)",
-        ondragend=js"JSServe.update_obs($(card.dragging), false); this.style.cursor='grab';",
+        class="select-none p-8 shadow bg-white border-2 border-transparent",
     )
+    evaljs(session, js"""
+        document.addEventListener("mousedown", function (event){
+            const isWithin = $(ui).contains(event.target);
+            JSServe.update_obs($(card.selected), isWithin);
+        });
+    """)
+    JSServe.onjs(session, card.selected, js"""
+        function (val) {
+            const newClasses = val ? ["border-blue-800"] : ["border-transparent"];
+            const oldClasses = val ? ["border-transparent"] : ["border-blue-800"];
+            $(ui).classList.add(...newClasses);
+            $(ui).classList.remove(...oldClasses);
+        }
+    """)
     return jsrender(session, ui)
 end
