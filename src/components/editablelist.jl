@@ -4,19 +4,19 @@ struct AddNewCard
     isblur::Observable{Bool}
 end
 
-function AddNewCard(keys::Observable{Vector{String}}, value=Observable{String}())
+function AddNewCard(keys::Observable{Vector{String}}, value=Observable(""))
     return AddNewCard(keys, value, Observable(true))
 end
 
 function jsrender(session::Session, add::AddNewCard)
-    l = List(add.keys)
+    l = List(add.keys, add.value)
     list = JSServe.jsrender(session, l)
     isblur = add.isblur
     onclick = js"JSServe.update_obs($(isblur), false)"
     onblur = js"JSServe.update_obs($(isblur), true)"
     box = DOM.button(
         "+";
-        class="w-full p-8 cursor-pointer text-blue-800 text-2xl hover:bg-gray-200 hover:text-blue-900",
+        class="w-full p-8 cursor-pointer text-left text-blue-800 text-2xl hover:bg-gray-200 hover:text-blue-900",
         onclick,
         onblur
     )

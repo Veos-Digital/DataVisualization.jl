@@ -1,12 +1,16 @@
 struct List
     entries::Observable{Vector{String}}
+    value::Observable{String}
 end
 
-function styled_list(entries=String[])
+function styled_list(entries=String[], value=Observable(""))
     activeClasses = ("text-gray-900", "bg-gray-200")
     inactiveClasses = ("text-gray-700",)
     itemclass = "cursor-pointer px-4 py-2 bg-white $(join(inactiveClasses, ' ')) $(join("hover:" .* activeClasses, ' '))"
-    lis = map(entry -> DOM.li(entry, class=itemclass), entries)
+    lis = map(entries) do entry
+        onclick = js"JSServe.update_obs($(value), $(entry))"
+        return DOM.li(entry; class=itemclass, onclick)
+    end
     return DOM.ul(
         lis,
         class="border-2 border-gray-200 max-h-64",
@@ -16,6 +20,6 @@ function styled_list(entries=String[])
 end
 
 function jsrender(session::Session, list::List)
-    ui = map(styled_list, session, list.entries)
+    ui = map(entries -> styled_list(entries, list.value), session, list.entries)
     return jsrender(session, ui)
 end
