@@ -12,13 +12,16 @@ function jsrender(session::Session, add::AddNewCard)
     l = List(add.keys, add.value)
     list = JSServe.jsrender(session, l)
     isblur = add.isblur
-    onclick = js"JSServe.update_obs($(isblur), false)"
-    onblur = js"JSServe.update_obs($(isblur), true)"
+    onfocusin = js"JSServe.update_obs($(isblur), false)"
+    onfocusout=js"""
+        const tgt = event.relatedTarget;
+        tgt && $(list).contains(tgt) || JSServe.update_obs($(isblur), true);
+    """
     box = DOM.button(
         "+";
         class="w-full p-8 cursor-pointer text-left text-blue-800 text-2xl hover:bg-gray-200 hover:text-blue-900",
-        onclick,
-        onblur
+        onfocusin,
+        onfocusout,
     )
     ui = DOM.div(box, DOM.div(list, style="position: relative; z-index: 1;", hidden=isblur))
     return jsrender(session, ui)

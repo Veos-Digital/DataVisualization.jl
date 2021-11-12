@@ -45,6 +45,7 @@ const utilities = (function () {
         }
     }
 
+    // FIXME: may not be necessary
     function addClass(node, cs) {
         for (const c of cs.split(' ')) {
             node.classList.add(c);
