@@ -1,16 +1,26 @@
 struct AddNewCard
     keys::Observable{Vector{String}}
     value::Observable{String}
-    clicked::Observable{Bool}
+    isblur::Observable{Bool}
 end
 
 function AddNewCard(keys::Observable{Vector{String}}, value=Observable{String}())
-    return AddNewCard(keys, value, Observable(false))
+    return AddNewCard(keys, value, Observable(true))
 end
 
 function jsrender(session::Session, add::AddNewCard)
-    ui = DOM.p("+"; class="p-8 cursor-pointer text-blue-800 text-2xl hover:bg-gray-200 hover:text-blue-900")
-    evaljs(session, js"$(UtilitiesJS).isLastClicked($(ui), $(add.selected))")
+    l = List(add.keys)
+    list = JSServe.jsrender(session, l)
+    isblur = add.isblur
+    onclick = js"JSServe.update_obs($(isblur), false)"
+    onblur = js"JSServe.update_obs($(isblur), true)"
+    box = DOM.button(
+        "+";
+        class="w-full p-8 cursor-pointer text-blue-800 text-2xl hover:bg-gray-200 hover:text-blue-900",
+        onclick,
+        onblur
+    )
+    ui = DOM.div(box, DOM.div(list, style="position: relative; z-index: 1;", hidden=isblur))
     return jsrender(session, ui)
 end
 
@@ -32,6 +42,7 @@ struct EditableList
 end
 
 function add_callbacks!(add::AddNewCard, el::EditableList)
+    return add
 end
 #     on(add.value) do val
 #         list = el.list[]
