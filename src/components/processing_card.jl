@@ -88,12 +88,7 @@ function jsrender(session::Session, card::ProcessingCard)
         DOM.div(class="mt-12", card.process_button, card.clear_button),
         class="select-none p-8 shadow bg-white border-2 border-transparent",
     )
-    evaljs(session, js"""
-        document.addEventListener("mousedown", function (event){
-            const isWithin = $(ui).contains(event.target);
-            JSServe.update_obs($(card.selected), isWithin);
-        });
-    """)
+    evaljs(session, js"$(UtilitiesJS).isLastClicked($(ui), $(card.selected))")
     JSServe.onjs(session, card.selected, js"""
         function (val) {
             const newClasses = val ? ["border-blue-800"] : ["border-transparent"];

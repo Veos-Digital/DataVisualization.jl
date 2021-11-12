@@ -1,3 +1,4 @@
+# FIXME: actually use this observable
 struct FilePicker{T}
     files::Observable{T}
 end

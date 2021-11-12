@@ -45,11 +45,7 @@ function jsrender(session::Session, wdg::Autocomplete)
     selected = Observable{Union{Int, Nothing}}(nothing) # 0-based indexing
     keydown = Observable("")
 
-    list = DOM.ul(
-        class="border-2 border-gray-200 max-h-64",
-        role="menu",
-        style="position: absolute; left:0; right:0; top:0.5rem; overflow-y: scroll;",
-    )
+    list = styled_list() # TODO: use `List` struct here instead and use JSServe for updates
 
     input = DOM.input(
         onfocusin=js"JSServe.update_obs($(isblur), false)",

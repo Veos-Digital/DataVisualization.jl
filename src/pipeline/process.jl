@@ -6,12 +6,35 @@ const available_processing_steps = (
 
 struct Process{T} <: AbstractPipeline{T}
     table::Observable{T}
-    list::DraggableList{AbstractProcessingStep{T}}
+    list::EditableList
     value::Observable{T}
 end
 
-function Process(table::Observable{T}, steps::Observable{Vector{AbstractProcessingStep{T}}}, value::Observable{T}) where T
-    return Process(table, DraggableList(steps), value)
+function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
+    value = Observable(table[])
+    steps = Observable(Any[getproperty(available_processing_steps, key)(value) for key in keys])
+    options = Observable(to_stringdict(available_processing_steps))
+    process = Process(table, EditableList(options, steps), value)
+    for step in steps[]
+        add_callbacks!(step, process)
+    end
+    on(table) do data
+        _steps = steps[]
+        # TODO: contemplate error case
+        value[] = compute_pipeline(always_true, data, value[], _steps)
+        for step in _steps
+            step.card.state[] = :done
+        end
+    end
+    return process
+end
+
+function jsrender(session::Session, process::Process)
+    ui = DOM.div(
+        process.list;
+        scrollablecomponent...
+    )
+    return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end
 
 default_needs_update(step) = step.card.state[] != :done
@@ -85,30 +108,4 @@ function add_callbacks!(step::AbstractProcessingStep, process::Process)
             # TODO: clear card before destroying!
         end
     end
-end
-
-function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
-    value = Observable(table[])
-    steps = Observable(AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys])
-    process = Process(table, steps, value)
-    for step in steps[]
-        add_callbacks!(step, process)
-    end
-    on(table) do data
-        _steps = steps[]
-        # TODO: contemplate error case
-        value[] = compute_pipeline(always_true, data, value[], _steps)
-        for step in _steps
-            step.card.state[] = :done
-        end
-    end
-    return process
-end
-
-function jsrender(session::Session, process::Process)
-    ui = DOM.div(
-        process.list;
-        scrollablecomponent...
-    )
-    return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end
