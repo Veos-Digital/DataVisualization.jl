@@ -1,12 +1,14 @@
 struct List
-    entries::Observable{Vector{Tuple{String, String}}}
+    entries::Observable{Dict{String, Vector{String}}}
     value::Observable{String}
 end
 
-List(entries::Observable{Vector{Tuple{String, String}}}) = List(entries, Observable(""))
+List(entries::Observable{Dict{String, Vector{String}}}) = List(entries, Observable(""))
 List(keys::Observable{Vector{String}}, value::Observable{String}=Observable("")) = List(lift(to_entries, keys), value)
 
-to_entries(keys::AbstractVector{<:AbstractString}) = map(key -> (key, key), keys)
+function to_entries(keys::AbstractVector{<:AbstractString})
+    return Dict("keys" => collect(String, keys), "values" => collect(String, keys))
+end
 
 # TODO: factor out common component
 function jsrender(session::Session, l::List)
@@ -20,8 +22,7 @@ function jsrender(session::Session, l::List)
     )
     onjs(session, l.entries, js"""
         function (entries) {
-            const keys = entries.map(entry => entry[0]);
-            const values = entries.map(entry => entry[1]);
+            const {keys, values} = entries;
             const list = $(list);
             while (list.childNodes.length > keys.length) {
                 list.removeChild(list.lastChild);

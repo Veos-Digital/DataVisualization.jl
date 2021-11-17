@@ -91,8 +91,8 @@ function jsrender(session::Session, wdg::Autocomplete)
             }
             const slice = value.slice(idx + 1, value.length)
             const keys = list.filter(text => text && text.toLowerCase().startsWith(slice.toLowerCase()));
-            const entries = keys.map(key => [key, value.slice(0, idx + 1) + key]);
-            JSServe.update_obs($(wdg.list.entries), entries);
+            const values = keys.map(key => value.slice(0, idx + 1) + key);
+            JSServe.update_obs($(wdg.list.entries), {keys, values});
             $(input).focus();
         }
     """)
