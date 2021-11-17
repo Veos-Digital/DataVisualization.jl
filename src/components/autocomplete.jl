@@ -93,9 +93,15 @@ function jsrender(session::Session, wdg::Autocomplete)
             const keys = list.filter(text => text && text.toLowerCase().startsWith(slice.toLowerCase()));
             const values = keys.map(key => value.slice(0, idx + 1) + key);
             JSServe.update_obs($(wdg.list.entries), {keys, values});
-            $(input).focus();
+            JSServe.update_obs($(selected), null);
         }
     """)
+
+    notify!(wdg.value)
+
+    # TODO: see if below is necessary / make more subtle
+    onjs(session, selected, js"idx => $(input).focus()")
+
     return jsrender(session, div)
 end
 
