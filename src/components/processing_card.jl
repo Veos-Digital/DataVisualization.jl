@@ -86,16 +86,11 @@ function jsrender(session::Session, card::ProcessingCard)
         ),
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
-        class="select-none p-8 shadow bg-white border-2 border-transparent",
+        class="select-none p-8 shadow bg-white border-2 border-transparent focus:border-blue-800",
+        tabindex="0",
+        dataId=string(objectid(card)),
+        onfocusin=js"JSServe.update_obs($(card.selected), true)",
+        onfocusout=js"JSServe.update_obs($(card.selected), false)",
     )
-    evaljs(session, js"$(UtilitiesJS).isLastClicked($(ui), $(card.selected))")
-    JSServe.onjs(session, card.selected, js"""
-        function (val) {
-            const newClasses = val ? ["border-blue-800"] : ["border-transparent"];
-            const oldClasses = val ? ["border-transparent"] : ["border-blue-800"];
-            $(ui).classList.add(...newClasses);
-            $(ui).classList.remove(...oldClasses);
-        }
-    """)
     return jsrender(session, ui)
 end

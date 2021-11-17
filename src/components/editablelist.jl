@@ -2,16 +2,23 @@ struct AddNewCard
     value::Observable{String}
     isblur::Observable{Bool}
     list::List
+    input_id::Observable{String}
 end
 
-function AddNewCard(keys::Observable{Vector{String}}, value=Observable(""))
-    return AddNewCard(value, Observable(true), List(keys, value))
+function AddNewCard(keys::Observable{Vector{String}}, value=Observable(""), list::List=List(keys, value))
+    return AddNewCard(value, Observable(true), list, Observable(""))
 end
 
 function jsrender(session::Session, add::AddNewCard)
     list = JSServe.jsrender(session, add.list)
-    isblur = add.isblur
-    onfocusin = js"JSServe.update_obs($(isblur), false)"
+    isblur, input_id = add.isblur, add.input_id
+    onfocusin = js"""
+        JSServe.update_obs($(isblur), false);
+        const tgt = event.relatedTarget;
+        const dataset = (tgt || {}).dataset;
+        const input_id = (dataset || {}).id;
+        input_id && JSServe.update_obs($(input_id), input_id);
+    """
     onfocusout=js"""
         const tgt = event.relatedTarget;
         tgt && $(list).contains(tgt) || JSServe.update_obs($(isblur), true);
@@ -22,6 +29,7 @@ function jsrender(session::Session, add::AddNewCard)
         onfocusin,
         onfocusout,
     )
+    onjs(session, add.value, js"function (value) {JSServe.update_obs($(isblur), true);}")
     ui = DOM.div(box, DOM.div(list, style="position: relative; z-index: 1;", hidden=isblur))
     return jsrender(session, ui)
 end
@@ -39,30 +47,26 @@ struct EditableList
     options::Observable{StringLittleDict{Any}}
     steps::Observable{Vector{Any}}
     list::Observable{Vector{Any}}
-    add_selected::Observable{Int}
-    card_selected::Observable{Int}
 end
 
 function add_callbacks!(add::AddNewCard, el::EditableList)
+    on(add.value) do val
+        isempty(val) && return
+        list = el.list[]
+        id = objectid(add)
+        idx = findfirst(==(id)∘objectid, list)
+        _selected = count(x -> x isa AddNewCard, view(list, 1:idx))
+        _steps = el.steps[]
+        for (idx, step) in enumerate(_steps)
+            if string(objectid(step.card)) == add.input_id[]
+                old = idx
+                new = _selected - (_selected > old)
+                el.steps[] = move_item(_steps, old => new)
+            end
+        end
+    end
     return add
 end
-#     on(add.value) do val
-#         list = el.list[]
-#         id = objectid(add)
-#         idx = findfirst(==(id)∘objectid, list)
-#         _selected = count(x -> x isa AddNewCard, view(list, 1:idx))
-#         el.selected[] = _selected
-#         _steps = el.steps[]
-#         for (idx, step) in enumerate(_steps)
-#             if step.card.selected
-#                 old = idx
-#                 new = _selected - (_selected > old)
-#                 el.steps[] = move_item(_steps, old => new)
-#             end
-#         end
-#     end
-#     return add
-# end
 
 function EditableList(options::Observable, steps::Observable)
     keys = lift(options) do options
@@ -72,9 +76,8 @@ function EditableList(options::Observable, steps::Observable)
         end
         return acc
     end
-    add_selected, card_selected = Observable(0), Observable(0)
     list = Observable{Vector{Any}}()
-    el = EditableList(keys, options, steps, list, add_selected, card_selected)
+    el = EditableList(keys, options, steps, list)
     map!(list, steps) do steps
         elements = Any[]
         push!(elements, add_callbacks!(AddNewCard(keys), el))

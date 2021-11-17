@@ -52,14 +52,7 @@ const utilities = (function () {
         }
     }
 
-    function isLastClicked(wdg, obs) {
-        document.addEventListener("mousedown", function (event) {
-            JSServe.update_obs(obs, wdg.contains(event.target));
-        });
-    }
-
     return {
-        isLastClicked,
         cycle,
         styleSelected,
         readFiles,
