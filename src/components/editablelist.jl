@@ -1,15 +1,16 @@
 struct AddNewCard
-    keys::Observable{Vector{String}}
+    entries::Observable{Vector{@NamedTuple{key::String, value::String}}}
     value::Observable{String}
     isblur::Observable{Bool}
 end
 
 function AddNewCard(keys::Observable{Vector{String}}, value=Observable(""))
-    return AddNewCard(keys, value, Observable(true))
+    entries = lift(to_entries, keys)
+    return AddNewCard(entries, value, Observable(true))
 end
 
 function jsrender(session::Session, add::AddNewCard)
-    l = List(add.keys, add.value)
+    l = List(add.entries, add.value)
     list = JSServe.jsrender(session, l)
     isblur = add.isblur
     onfocusin = js"JSServe.update_obs($(isblur), false)"
