@@ -57,12 +57,19 @@ function add_callbacks!(add::AddNewCard, el::EditableList)
         idx = findfirst(==(id)∘objectid, list)
         _selected = count(x -> x isa AddNewCard, view(list, 1:idx))
         _steps = el.steps[]
-        for (idx, step) in enumerate(_steps)
-            if string(objectid(step.card)) == add.input_id[]
-                old = idx
-                new = _selected - (_selected > old)
-                el.steps[] = move_item(_steps, old => new)
+        if val == "Move Selected"
+            for (idx, step) in enumerate(_steps)
+                if string(objectid(step.card)) == add.input_id[]
+                    old = idx
+                    new = _selected - (_selected > old)
+                    el.steps[] = move_item(_steps, old => new)
+                end
             end
+        else
+            card = get(el.options[], val, nothing)
+            isnothing(card) && return
+            el.steps[] = insert_item(_steps, idx, card)
+            # TODO: add callbacks to card and make insertion smoother
         end
     end
     return add

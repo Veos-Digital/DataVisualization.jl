@@ -13,7 +13,7 @@ end
 function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
     value = Observable(table[])
     steps = Observable(Any[getproperty(available_processing_steps, key)(value) for key in keys])
-    options = Observable(to_stringdict(available_processing_steps))
+    options = Observable(to_stringdict(map(type -> type(value), available_processing_steps)))
     process = Process(table, EditableList(options, steps), value)
     for step in steps[]
         add_callbacks!(step, process)
