@@ -27,10 +27,14 @@ function jsrender(session::Session, wdg::Autocomplete)
     list = jsrender(session, wdg.list)
 
     input = DOM.input(
-        onfocus=js"JSServe.update_obs($(isblur), false)",
+        onfocus=js"JSServe.update_obs($(isblur), false)", # FIXME: figure out exactly focus / blur / list
         onblur=js"""
             const tgt = event.relatedTarget;
-            tgt && $(list).contains(tgt) || JSServe.update_obs($(isblur), true);
+            if (tgt && $(list).contains(tgt)) {
+                this.focus();
+            } else {
+                JSServe.update_obs($(isblur), true);
+            }
         """,
         class="w-full",
         type="text",
@@ -44,10 +48,6 @@ function jsrender(session::Session, wdg::Autocomplete)
     div = DOM.div(
         input,
         DOM.div(style="position: relative; z-index: 1;", hidden=isblur, list),
-        onclick=js"""
-            const tgt = event.target;
-            $(list).contains(tgt) && $(input).focus();
-        """,    
     )
 
     activeClasses = ("text-gray-900", "bg-gray-200")
