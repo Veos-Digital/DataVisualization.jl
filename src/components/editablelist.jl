@@ -30,7 +30,13 @@ function jsrender(session::Session, add::AddNewCard)
         onfocusout,
     )
     onjs(session, add.value, js"function (value) {JSServe.update_obs($(isblur), true);}")
-    ui = DOM.div(box, DOM.div(list, style="position: relative; z-index: 1;", hidden=isblur))
+    ui = DOM.div(
+        box,
+        DOM.div(list, style="position: relative; z-index: 1;", hidden=isblur),
+        dataType="add",
+        dataId=string(objectid(add)),
+        dataSelected="false",
+    )
     return jsrender(session, ui)
 end
 

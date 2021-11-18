@@ -14,7 +14,6 @@ struct ProcessingCard
     process_button::Button
     clear_button::Button
     state::Observable{Symbol}
-    selected::Observable{Bool}
     destroy::Observable{Bool}
 end
 
@@ -30,7 +29,6 @@ function ProcessingCard(name;
                         process_button=Button("Process", class=buttonclass(true)),
                         clear_button=Button("Clear", class=buttonclass(false)),
                         state=Observable(:done),
-                        selected=Observable(false),
                         destroy = Observable(false))
 
     card = ProcessingCard(
@@ -42,7 +40,6 @@ function ProcessingCard(name;
         process_button,
         clear_button,
         state,
-        selected,
         destroy
     )
 
@@ -86,11 +83,11 @@ function jsrender(session::Session, card::ProcessingCard)
         ),
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
-        class="select-none p-8 shadow bg-white border-2 border-transparent focus:border-blue-800",
+        class="select-none p-8 shadow bg-white border-2 border-transparent",
         tabindex="0",
         dataId=string(objectid(card)),
-        onfocusin=js"JSServe.update_obs($(card.selected), true)",
-        onfocusout=js"JSServe.update_obs($(card.selected), false)",
+        dataType="card",
+        dataSelected="false",
     )
     return jsrender(session, ui)
 end

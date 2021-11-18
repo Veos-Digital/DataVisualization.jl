@@ -32,6 +32,7 @@ end
 function jsrender(session::Session, process::Process)
     ui = DOM.div(
         process.list;
+        onmousedown=js"$(UtilitiesJS).updateSelection(this, event);",
         scrollablecomponent...
     )
     return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
