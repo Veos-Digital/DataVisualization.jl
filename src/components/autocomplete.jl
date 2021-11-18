@@ -27,8 +27,8 @@ function jsrender(session::Session, wdg::Autocomplete)
     list = jsrender(session, wdg.list)
 
     input = DOM.input(
-        onfocusin=js"JSServe.update_obs($(isblur), false)",
-        onfocusout=js"""
+        onfocus=js"JSServe.update_obs($(isblur), false)",
+        onblur=js"""
             const tgt = event.relatedTarget;
             tgt && $(list).contains(tgt) || JSServe.update_obs($(isblur), true);
         """,

@@ -12,22 +12,22 @@ end
 function jsrender(session::Session, add::AddNewCard)
     list = JSServe.jsrender(session, add.list)
     isblur, input_id = add.isblur, add.input_id
-    onfocusin = js"""
+    onfocus = js"""
         JSServe.update_obs($(isblur), false);
         const tgt = event.relatedTarget;
         const dataset = (tgt || {}).dataset;
         const input_id = (dataset || {}).id;
         input_id && JSServe.update_obs($(input_id), input_id);
     """
-    onfocusout=js"""
+    onblur=js"""
         const tgt = event.relatedTarget;
         tgt && $(list).contains(tgt) || JSServe.update_obs($(isblur), true);
     """
     box = DOM.button(
         "+";
         class="w-full p-8 cursor-pointer text-left text-blue-800 text-2xl hover:bg-gray-200 hover:text-blue-900",
-        onfocusin,
-        onfocusout,
+        onfocus,
+        onblur,
     )
     onjs(session, add.value, js"function (value) {JSServe.update_obs($(isblur), true);}")
     ui = DOM.div(

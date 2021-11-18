@@ -57,8 +57,7 @@ function jsrender(session::Session, process::Process)
     ui = DOM.div(
         process.list;
         onmousedown=js"$(UtilitiesJS).updateSelection(this, event);",
-        style=scrollablecomponent.style * " min-height: 80vh;", # FIXME: do it systemically
-        scrollablecomponent.class
+        scrollablecomponent...
     )
     return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end
