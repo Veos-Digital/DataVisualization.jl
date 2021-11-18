@@ -12,8 +12,32 @@ end
 
 function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
     value = Observable(table[])
-    steps = Observable(Any[getproperty(available_processing_steps, key)(value) for key in keys])
-    options = Observable(to_stringdict(map(type -> type(value), available_processing_steps)))
+    steps = Observable(Any[])
+    function thunkify(type)
+        return function ()
+            step = type(value)
+            card = step.card
+            # May be safer to have separate `Observable`s controlling this
+            on(card.state) do state
+                if state != :done
+                    value[] = compute_pipeline(table[], value[], steps[])
+                    # TODO: contemplate error case
+                    card.state[] = :done
+                end
+            end
+            on(card.destroy) do val
+                _steps = steps[]
+                if val
+                    id = objectid(step)
+                    idx = findfirst(==(id)∘objectid, _steps)
+                    isnothing(idx) || (steps[] = remove_item(_steps, idx))
+                    # TODO: clear card before destroying!
+                end
+            end
+            return step
+        end
+    end
+    options = Observable(to_stringdict(map(thunkify, available_processing_steps)))
     process = Process(table, EditableList(options, steps), value)
     for step in steps[]
         add_callbacks!(step, process)
@@ -33,7 +57,8 @@ function jsrender(session::Session, process::Process)
     ui = DOM.div(
         process.list;
         onmousedown=js"$(UtilitiesJS).updateSelection(this, event);",
-        scrollablecomponent...
+        style=scrollablecomponent.style * " min-height: 80vh;", # FIXME: do it systemically
+        scrollablecomponent.class
     )
     return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end
@@ -87,26 +112,4 @@ function compute_pipeline(f, input, cache, steps)
         step.card.state[] = :done
     end
     return result
-end
-
-function add_callbacks!(step::AbstractProcessingStep, process::Process)
-    table, value, steps = process.table, process.value, process.list.steps
-    card = step.card
-    # May be safer to have separate `Observable`s controlling this
-    on(card.state) do state
-        if state != :done
-            value[] = compute_pipeline(table[], value[], steps[])
-            # TODO: contemplate error case
-            card.state[] = :done
-        end
-    end
-    on(card.destroy) do val
-        _steps = steps[]
-        if val
-            id = objectid(step)
-            idx = findfirst(==(id)∘objectid, _steps)
-            isnothing(idx) || (steps[] = remove_item(_steps, idx))
-            # TODO: clear card before destroying!
-        end
-    end
 end

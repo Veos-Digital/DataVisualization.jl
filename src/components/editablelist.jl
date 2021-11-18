@@ -55,7 +55,8 @@ struct EditableList
     list::Observable{Vector{Any}}
 end
 
-function add_callbacks!(add::AddNewCard, el::EditableList)
+function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
+    add = AddNewCard(keys)
     on(add.value) do val
         isempty(val) && return
         list = el.list[]
@@ -72,9 +73,9 @@ function add_callbacks!(add::AddNewCard, el::EditableList)
                 end
             end
         else
-            card = get(el.options[], val, nothing)
-            isnothing(card) && return
-            el.steps[] = insert_item(_steps, idx, card)
+            thunk = get(el.options[], val, nothing)
+            isnothing(thunk) && return
+            el.steps[] = insert_item(_steps, _selected, thunk())
             # TODO: add callbacks to card and make insertion smoother
         end
     end
@@ -93,10 +94,10 @@ function EditableList(options::Observable, steps::Observable)
     el = EditableList(keys, options, steps, list)
     map!(list, steps) do steps
         elements = Any[]
-        push!(elements, add_callbacks!(AddNewCard(keys), el))
+        push!(elements, AddNewCard(keys, el))
         for step in steps
             push!(elements, step)
-            push!(elements, add_callbacks!(AddNewCard(keys), el))
+            push!(elements, AddNewCard(keys, el))
         end
         return elements
     end
