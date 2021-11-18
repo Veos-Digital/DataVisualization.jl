@@ -115,3 +115,14 @@ function insert_item(v, idx, value)
         return value
     end
 end
+
+function scrollable_component(args...; kwargs...)
+    return DOM.div(
+        DOM.div(
+            args...;
+            class="absolute left-0 right-16",
+            kwargs...
+        ),
+        class="overflow-y-scroll h-full w-full relative",
+    )
+end
