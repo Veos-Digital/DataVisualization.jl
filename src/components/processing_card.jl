@@ -89,7 +89,6 @@ function jsrender(session::Session, card::ProcessingCard)
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
         class="select-none p-8 shadow bg-white border-2 border-transparent",
-        tabindex="0",
         dataId=string(objectid(card)),
         dataType="card",
         dataSelected="false",
