@@ -21,6 +21,16 @@ function autocompletes(card::ProcessingCard)
     return filter_namedtuple(!isnothing, (; card.inputs, card.output, card.method, card.rename))
 end
 
+function process!(card::ProcessingCard)
+    foreach(parse!, autocompletes(card))
+    card.state[] = :computing
+end
+
+function clear!(card::ProcessingCard)
+    foreach(reset!, autocompletes(card))
+    card.state[] = :computing
+end
+
 function ProcessingCard(name;
                         inputs,
                         output=nothing,
@@ -43,14 +53,9 @@ function ProcessingCard(name;
         destroy
     )
 
-    on(clear_button.value) do _
-        foreach(reset!, autocompletes(card))
-        card.state[] = :computing
-    end
-    on(process_button.value) do _
-        foreach(parse!, autocompletes(card))
-        card.state[] = :computing
-    end
+    on(_ ->  process!(card), process_button.value)
+    on(_ ->  clear!(card), clear_button.value)
+
     return card
 end
 

@@ -26,12 +26,12 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
                 end
             end
             on(card.destroy) do val
+                clear!(card)
                 _steps = steps[]
                 if val
                     id = objectid(step)
                     idx = findfirst(==(id)∘objectid, _steps)
                     isnothing(idx) || (steps[] = remove_item(_steps, idx))
-                    # TODO: clear card before destroying!
                 end
             end
             return step
