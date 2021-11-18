@@ -2,23 +2,16 @@ struct AddNewCard
     value::Observable{String}
     isblur::Observable{Bool}
     list::List
-    input_id::Observable{String}
 end
 
 function AddNewCard(keys::Observable{Vector{String}}, value=Observable(""), list::List=List(keys, value))
-    return AddNewCard(value, Observable(true), list, Observable(""))
+    return AddNewCard(value, Observable(true), list)
 end
 
 function jsrender(session::Session, add::AddNewCard)
     list = JSServe.jsrender(session, add.list)
-    isblur, input_id = add.isblur, add.input_id
-    onfocus = js"""
-        JSServe.update_obs($(isblur), false);
-        const tgt = event.relatedTarget;
-        const dataset = (tgt || {}).dataset;
-        const input_id = (dataset || {}).id;
-        input_id && JSServe.update_obs($(input_id), input_id);
-    """
+    isblur = add.isblur
+    onfocus = js"JSServe.update_obs($(isblur), false);"
     onblur=js"""
         const tgt = event.relatedTarget;
         tgt && $(list).contains(tgt) || JSServe.update_obs($(isblur), true);
@@ -99,6 +92,7 @@ function EditableList(options::Observable, steps::Observable)
             push!(elements, step)
             push!(elements, AddNewCard(keys, el))
         end
+        push!(elements, DOM.div(class="h-64"))
         return elements
     end
     return el
