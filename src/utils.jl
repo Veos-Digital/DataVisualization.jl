@@ -88,11 +88,6 @@ function with_tabular(widget, table; padwidgets=16, padtable=16)
     )
 end
 
-const scrollablecomponent = (
-    class="pr-16",
-    style="overflow-y:scroll; min-height: 80vh; max-height: 80vh;" # FIXME: add to tailwind config https://tailwindcss.com/docs/max-height#max-height-scale
-)
-
 function filter_namedtuple(f, nt)
     names = filter(key -> f(nt[key]), keys(nt))
     return NamedTuple{names}(nt)

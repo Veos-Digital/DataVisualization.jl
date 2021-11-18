@@ -21,10 +21,9 @@ function jsrender(session::Session, f::Filter)
 
     filter_button = Button("Filter", class=buttonclass(true))
     clear_button = Button("Clear", class=buttonclass(false))
-    ui = DOM.div(
+    ui = scrollable_component(
         f.filters,
-        DOM.div(class="mt-12 pl-4", filter_button, clear_button);
-        scrollablecomponent...
+        DOM.div(class="mt-12 pl-4", filter_button, clear_button)
     )
 
     tryon(session, filter_button.value) do _

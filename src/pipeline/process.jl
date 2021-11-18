@@ -53,11 +53,21 @@ function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) wher
     return process
 end
 
+function scrollable_component(args...; kwargs...)
+    return DOM.div(
+        DOM.div(
+            args...;
+            class="absolute left-0 right-16",
+            kwargs...
+        ),
+        class="overflow-y-scroll h-full w-full relative",
+    )
+end
+
 function jsrender(session::Session, process::Process)
-    ui = DOM.div(
+    ui = scrollable_component(
         process.list;
-        onmousedown=js"$(UtilitiesJS).updateSelection(this, event, $(process.list.selected));",
-        scrollablecomponent...
+        onmousedown=js"$(UtilitiesJS).updateSelection(this, event, $(process.list.selected));"
     )
     return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end

@@ -26,10 +26,9 @@ function jsrender(session::Session, v::Visualize)
 
     plot_button = Button("Plot", class=buttonclass(true))
     clear_button = Button("Clear", class=buttonclass(false))
-    plotui = DOM.div(
+    plotui = scrollable_component(
         v.plotspecs,
-        DOM.div(class="mt-12 pl-4", plot_button, clear_button);
-        scrollablecomponent...
+        DOM.div(class="mt-12 pl-4", plot_button, clear_button)
     )
 
     tryon(update_plot!, session, plot_button.value)
