@@ -41,7 +41,14 @@ function jsrender(session::Session, wdg::Autocomplete)
         onkeydown=js"JSServe.update_obs($(keydown), event.key)"
     )
 
-    div = DOM.div(input, DOM.div(style="position: relative; z-index: 1;", hidden=isblur, list))
+    div = DOM.div(
+        input,
+        DOM.div(style="position: relative; z-index: 1;", hidden=isblur, list),
+        onclick=js"""
+            const tgt = event.target;
+            $(list).contains(tgt) && $(input).focus();
+        """,    
+    )
 
     activeClasses = ("text-gray-900", "bg-gray-200")
     inactiveClasses = ("text-gray-700",)
@@ -98,9 +105,6 @@ function jsrender(session::Session, wdg::Autocomplete)
     """)
 
     notify!(wdg.value)
-
-    # TODO: see if below is necessary / make more subtle
-    onjs(session, selected, js"idx => $(input).focus()")
 
     return jsrender(session, div)
 end
