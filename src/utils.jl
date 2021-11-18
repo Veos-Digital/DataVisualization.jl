@@ -88,12 +88,41 @@ function with_tabular(widget, table; padwidgets=16, padtable=16)
     )
 end
 
-const scrollablecomponent = (
-    class="pr-16",
-    style="overflow-y:scroll; max-height: 80vh;"
-)
-
 function filter_namedtuple(f, nt)
     names = filter(key -> f(nt[key]), keys(nt))
     return NamedTuple{names}(nt)
+end
+
+function move_item(v, (old, new))
+    return map(1:length(v)) do i
+        i == new && return v[old]
+        old ≤ i ≤ new && return v[i+1]
+        old ≥ i ≥ new && return v[i-1]
+        return v[i]
+    end
+end
+
+function remove_item(v, idx)
+    return map(1:length(v)-1) do i
+        return i < idx ? v[i] : v[i+1]
+    end
+end
+
+function insert_item(v, idx, value)
+    return map(1:length(v)+1) do i
+        i < idx && return v[i]
+        i > idx && return v[i-1]
+        return value
+    end
+end
+
+function scrollable_component(args...; kwargs...)
+    return DOM.div(
+        DOM.div(
+            args...;
+            class="absolute left-0 right-16",
+            kwargs...
+        ),
+        class="overflow-y-scroll h-full w-full relative",
+    )
 end

@@ -31,7 +31,7 @@ function jsrender(session::Session, togglers::Togglers)
                 if (!$(modified).isEqualNode(event.target)) {
                     JSServe.update_obs($selected, !(JSServe.get_observable($selected)))
                 }
-            """), # FIXME: report to JSServe that this requires string
+            """), # FIXME: report to JSServe that this requires string to work on reload
             DOM.span(class="pl-4 py-4 inline-block", entry.key),
             modified
         )

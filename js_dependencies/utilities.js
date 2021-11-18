@@ -45,16 +45,49 @@ const utilities = (function () {
         }
     }
 
+    // FIXME: may not be necessary
     function addClass(node, cs) {
         for (const c of cs.split(' ')) {
             node.classList.add(c);
         }
     }
 
+    function updateSelection(node, event, selected) {
+        const tgt = event.target;
+        const cards = node.querySelectorAll("[data-type='card']");
+        const adds = node.querySelectorAll("[data-type='add']");
+        let addsClicked = false;
+        const _selected = [];
+
+        for (let add of adds) {
+            if (add.contains(tgt)) {
+                add.dataset.selected = "true";
+                addsClicked = true;
+            } else {
+                add.dataset.selected = "false";
+            }
+        }
+        for (let card of cards) {
+            if (card.contains(tgt)) {
+                card.dataset.selected = "true";
+                card.classList.add("border-blue-800");
+                card.classList.remove("border-transparent");
+            } else if (!addsClicked) {
+                card.dataset.selected = "false";
+                card.classList.add("border-transparent");
+                card.classList.remove("border-blue-800");
+            }
+            (card.dataset.selected == "true") && _selected.push(card.dataset.id);
+        }
+
+        JSServe.update_obs(selected, _selected);
+    }
+
     return {
-        cycle: cycle,
-        styleSelected: styleSelected,
-        readFiles: readFiles,
-        addClass: addClass,
+        cycle,
+        styleSelected,
+        readFiles,
+        addClass,
+        updateSelection,
     }
 })();

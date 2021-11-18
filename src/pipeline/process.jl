@@ -6,8 +6,59 @@ const available_processing_steps = (
 
 struct Process{T} <: AbstractPipeline{T}
     table::Observable{T}
-    steps::Observable{Vector{AbstractProcessingStep{T}}}
+    list::EditableList
     value::Observable{T}
+end
+
+function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
+    value = Observable(table[])
+    steps = Observable(Any[])
+    function thunkify(type)
+        return function ()
+            step = type(value)
+            card = step.card
+            # May be safer to have separate `Observable`s controlling this
+            on(card.state) do state
+                if state != :done
+                    value[] = compute_pipeline(table[], value[], steps[])
+                    # TODO: contemplate error case
+                    card.state[] = :done
+                end
+            end
+            on(card.destroy) do val
+                clear!(card)
+                _steps = steps[]
+                if val
+                    id = objectid(step)
+                    idx = findfirst(==(id)∘objectid, _steps)
+                    isnothing(idx) || (steps[] = remove_item(_steps, idx))
+                end
+            end
+            return step
+        end
+    end
+    options = Observable(to_stringdict(map(thunkify, available_processing_steps)))
+    process = Process(table, EditableList(options, steps), value)
+    for step in steps[]
+        add_callbacks!(step, process)
+    end
+    on(table) do data
+        _steps = steps[]
+        # TODO: contemplate error case
+        value[] = compute_pipeline(always_true, data, value[], _steps)
+        for step in _steps
+            step.card.state[] = :done
+        end
+    end
+    return process
+end
+
+function jsrender(session::Session, process::Process)
+    ui = scrollable_component(
+        process.list;
+        onmousedown=js"$(UtilitiesJS).updateSelection(this, event, $(process.list.selected));"
+    )
+    return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end
 
 default_needs_update(step) = step.card.state[] != :done
@@ -59,37 +110,4 @@ function compute_pipeline(f, input, cache, steps)
         step.card.state[] = :done
     end
     return result
-end
-
-function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
-    value = Observable(table[])
-    steps = AbstractProcessingStep{T}[getproperty(available_processing_steps, key)(value) for key in keys]
-    for step in steps
-        # May be safer to have separate `Observable`s controlling this
-        on(step.card.state) do state
-            if state != :done
-                value[] = compute_pipeline(table[], value[], steps)
-                # TODO: contemplate error case
-                step.card.state[] = :done
-            end
-        end
-    end
-    on(table) do data
-        # TODO: contemplate error case
-        value[] = compute_pipeline(always_true, data, value[], steps)
-        for step in steps
-            step.card.state[] = :done
-        end
-    end
-    return Process(table, Observable(steps), value)
-end
-
-function jsrender(session::Session, process::Process)
-    ui = map(session, process.steps) do steps
-        return DOM.div(
-            steps;
-            scrollablecomponent...
-        )
-    end
-    return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end

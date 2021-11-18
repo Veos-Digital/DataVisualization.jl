@@ -14,27 +14,48 @@ struct ProcessingCard
     process_button::Button
     clear_button::Button
     state::Observable{Symbol}
+    destroy::Observable{Bool}
 end
 
 function autocompletes(card::ProcessingCard)
     return filter_namedtuple(!isnothing, (; card.inputs, card.output, card.method, card.rename))
 end
 
-function ProcessingCard(name;
-    inputs, output=nothing, method, rename,
-    process_button=Button("Process", class=buttonclass(true)),
-    clear_button=Button("Clear", class=buttonclass(false)),
-    state=Observable(:done))
+function process!(card::ProcessingCard)
+    foreach(parse!, autocompletes(card))
+    card.state[] = :computing
+end
 
-    card = ProcessingCard(name, inputs, output, method, rename, process_button, clear_button, state)
-    on(clear_button.value) do _
-        foreach(reset!, autocompletes(card))
-        card.state[] = :computing
-    end
-    on(process_button.value) do _
-        foreach(parse!, autocompletes(card))
-        card.state[] = :computing
-    end
+function clear!(card::ProcessingCard)
+    foreach(reset!, autocompletes(card))
+    card.state[] = :computing
+end
+
+function ProcessingCard(name;
+                        inputs,
+                        output=nothing,
+                        method,
+                        rename,
+                        process_button=Button("Process", class=buttonclass(true)),
+                        clear_button=Button("Clear", class=buttonclass(false)),
+                        state=Observable(:done),
+                        destroy = Observable(false))
+
+    card = ProcessingCard(
+        name,
+        inputs,
+        output,
+        method,
+        rename,
+        process_button,
+        clear_button,
+        state,
+        destroy
+    )
+
+    on(_ ->  process!(card), process_button.value)
+    on(_ ->  clear!(card), clear_button.value)
+
     return card
 end
 
@@ -53,12 +74,24 @@ function columns_in(card::ProcessingCard)
     return used_columns(args...)
 end
 
-# FIXME: this is wrong for `PCA` & co.
 function columns_out(card::ProcessingCard)
     return isempty(columns_in(card)) ? Symbol[] : used_columns(card.rename.parsed)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
-    ui = DOM.div(autocompletes(card)..., DOM.div(class="mt-12 mb-16 pl-4", card.process_button, card.clear_button))
+    ui = DOM.div(
+        DOM.span(string(card.name), class="text-blue-800 text-2xl font-semibold"),
+        DOM.span(
+            "✕",
+            class="text-red-800 hover:text-red-900 text-2xl font-semibold float-right cursor-pointer",
+            onclick=js"JSServe.update_obs($(card.destroy), true)"
+        ),
+        autocompletes(card)...,
+        DOM.div(class="mt-12", card.process_button, card.clear_button),
+        class="select-none p-8 shadow bg-white border-2 border-transparent",
+        dataId=string(objectid(card)),
+        dataType="card",
+        dataSelected="false",
+    )
     return jsrender(session, ui)
 end
