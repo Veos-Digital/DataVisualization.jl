@@ -45,30 +45,35 @@ struct EditableList
     keys::Observable{Vector{String}}
     options::Observable{StringLittleDict{Any}}
     steps::Observable{Vector{Any}}
+    selected::Observable{Vector{String}}
     list::Observable{Vector{Any}}
+end
+
+function get_addnewcard_index(list::Vector, add::AddNewCard)
+    idx = findfirst(==(add), list)
+    return count(x -> x isa AddNewCard, view(list, 1:idx))
+end
+
+function get_step_indices(steps::Vector, selected::Vector{String})
+    ids = @. string(objectid(getproperty(steps, :card)))
+    return filter(!isnothing, indexin(selected, ids))
 end
 
 function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
     add = AddNewCard(keys)
     on(add.value) do val
         isempty(val) && return
-        list = el.list[]
-        id = objectid(add)
-        idx = findfirst(==(id)∘objectid, list)
-        _selected = count(x -> x isa AddNewCard, view(list, 1:idx))
+        addnewcard_index = get_addnewcard_index(el.list[], add)
         _steps = el.steps[]
+        step_indices = get_step_indices(_steps, el.selected[])
         if val == "Move Selected"
-            for (idx, step) in enumerate(_steps)
-                if string(objectid(step.card)) == add.input_id[]
-                    old = idx
-                    new = _selected - (_selected > old)
-                    el.steps[] = move_item(_steps, old => new)
-                end
-            end
+            isempty(step_indices) && return
+            step_index = first(step_indices)
+            el.steps[] = move_item(_steps, step_index => addnewcard_index - (addnewcard_index > step_index))
         else
             thunk = get(el.options[], val, nothing)
             isnothing(thunk) && return
-            el.steps[] = insert_item(_steps, _selected, thunk())
+            el.steps[] = insert_item(_steps, addnewcard_index, thunk())
             # TODO: add callbacks to card and make insertion smoother
         end
     end
@@ -76,6 +81,7 @@ function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
 end
 
 function EditableList(options::Observable, steps::Observable)
+    selected = Observable(String[])
     keys = lift(options) do options
         acc = ["Move Selected"]
         for key in Base.keys(options)
@@ -84,7 +90,7 @@ function EditableList(options::Observable, steps::Observable)
         return acc
     end
     list = Observable{Vector{Any}}()
-    el = EditableList(keys, options, steps, list)
+    el = EditableList(keys, options, steps, selected, list)
     map!(list, steps) do steps
         elements = Any[]
         push!(elements, AddNewCard(keys, el))

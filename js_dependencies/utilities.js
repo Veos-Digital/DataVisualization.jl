@@ -52,11 +52,12 @@ const utilities = (function () {
         }
     }
 
-    function updateSelection(node, event) {
+    function updateSelection(node, event, selected) {
         const tgt = event.target;
         const cards = node.querySelectorAll("[data-type='card']");
         const adds = node.querySelectorAll("[data-type='add']");
         let addsClicked = false;
+        const _selected = [];
 
         for (let add of adds) {
             if (add.contains(tgt)) {
@@ -76,7 +77,10 @@ const utilities = (function () {
                 card.classList.add("border-transparent");
                 card.classList.remove("border-blue-800");
             }
+            (card.dataset.selected == "true") && _selected.push(card.dataset.id);
         }
+
+        JSServe.update_obs(selected, _selected);
     }
 
     return {
