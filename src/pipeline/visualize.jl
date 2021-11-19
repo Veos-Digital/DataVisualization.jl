@@ -23,7 +23,7 @@ function jsrender(session::Session, v::Visualize)
         is_set(v.plotspecs) || return
         plt = to_algebraic(v)
         pr = pixelratio[]
-        axis = (width=round(Int, 500pr), height=round(Int, 500pr))
+        axis = (width=round(Int, 350pr), height=round(Int, 350pr))
         fg = draw(plt; axis)
         plot[] = fg.figure
     end

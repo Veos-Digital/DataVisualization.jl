@@ -88,7 +88,7 @@ const utilities = (function () {
         const updatePixelRatio = () => {
             let pr = window.devicePixelRatio;
             JSServe.update_obs(observable, pr);
-            matchMedia(`(resolution: ${pr}dppx)`).addEventListener("change", updatePixelRatio, { once: true })
+            matchMedia(`(resolution: ${pr}dppx)`).addEventListener("change", updatePixelRatio, { once: true });
         }
         updatePixelRatio();
     }
