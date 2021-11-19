@@ -83,11 +83,22 @@ const utilities = (function () {
         JSServe.update_obs(selected, _selected);
     }
 
+    // ref: https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio
+    function trackPixelRatio(observable) {
+        const updatePixelRatio = () => {
+            let pr = window.devicePixelRatio;
+            JSServe.update_obs(observable, pr);
+            matchMedia(`(resolution: ${pr}dppx)`).addEventListener("change", updatePixelRatio, { once: true })
+        }
+        updatePixelRatio();
+    }
+
     return {
         cycle,
         styleSelected,
         readFiles,
         addClass,
         updateSelection,
+        trackPixelRatio,
     }
 })();
