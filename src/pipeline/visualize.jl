@@ -15,11 +15,15 @@ function jsrender(session::Session, v::Visualize)
 
     plot = Observable{Figure}(defaultplot())
 
+    pixelratio = Observable(1.0)
+    evaljs(session, js"$(UtilitiesJS).trackPixelRatio($(pixelratio))")
+
     reset_plot!(_) = plot[] = defaultplot()
     function update_plot!(_)
         is_set(v.plotspecs) || return
         plt = to_algebraic(v)
-        axis = (width=500, height=500)
+        pr = pixelratio[]
+        axis = (width=round(Int, 350pr), height=round(Int, 350pr))
         fg = draw(plt; axis)
         plot[] = fg.figure
     end
