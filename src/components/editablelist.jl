@@ -74,7 +74,6 @@ function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
             thunk = get(el.options[], val, nothing)
             isnothing(thunk) && return
             el.steps[] = insert_item(_steps, addnewcard_index, thunk())
-            # TODO: add callbacks to card and make insertion smoother
         end
     end
     return add

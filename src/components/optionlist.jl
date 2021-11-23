@@ -1,3 +1,4 @@
+# TODO: add `selected` `Observable` here as well 
 struct List
     entries::Observable{Dict{String, Vector{String}}}
     value::Observable{String}
