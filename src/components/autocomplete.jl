@@ -50,9 +50,8 @@ function jsrender(session::Session, wdg::Autocomplete)
         DOM.div(style="position: relative; z-index: 1;", hidden=isblur, list),
     )
 
-    activeClasses = ("text-gray-900", "bg-gray-200")
-    inactiveClasses = ("text-gray-700",)
-    itemclass = "px-4 py-2 bg-white $(join(inactiveClasses, ' ')) $(join("hover:" .* activeClasses, ' '))"
+    activeClasses = ["text-gray-900", "bg-gray-200"]
+    inactiveClasses = ["text-gray-700"]
 
     # Add behavior when user presses key
     onjs(session, keydown, js"""
