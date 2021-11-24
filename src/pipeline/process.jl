@@ -10,7 +10,7 @@ struct Process{T} <: AbstractPipeline{T}
     value::Observable{T}
 end
 
-function Process(table::Observable{T}, keys=(:Predict, :Cluster, :Project)) where {T}
+function Process(table::Observable{T}) where {T}
     value = Observable(table[])
     steps = Observable(Any[])
     function thunkify(type)

@@ -1,31 +1,32 @@
 struct AddNewCard
     value::Observable{String}
-    isblur::Observable{Bool}
     list::List
 end
 
 function AddNewCard(keys::Observable{Vector{String}}, value=Observable(""), list::List=List(keys, value))
-    return AddNewCard(value, Observable(true), list)
+    return AddNewCard(value, list)
 end
 
 function jsrender(session::Session, add::AddNewCard)
     list = JSServe.jsrender(session, add.list)
-    isblur = add.isblur
-    onfocus = js"JSServe.update_obs($(isblur), false);"
+    hidden, keydown = add.list.hidden, add.list.keydown
+    onfocus = js"JSServe.update_obs($(hidden), false);"
     onblur=js"""
         const tgt = event.relatedTarget;
-        tgt && $(list).contains(tgt) || JSServe.update_obs($(isblur), true);
+        tgt && $(list).contains(tgt) || JSServe.update_obs($(hidden), true);
     """
+    onkeydown = js"event.key == 'Escape' ? this.blur() : JSServe.update_obs($(keydown), event.key)"
     box = DOM.button(
         "+";
         class="w-full p-8 cursor-pointer text-left text-blue-800 text-2xl hover:bg-gray-200 hover:text-blue-900",
         onfocus,
         onblur,
+        onkeydown
     )
-    onjs(session, add.value, js"function (value) {JSServe.update_obs($(isblur), true);}")
+    onjs(session, add.value, js"function (value) {JSServe.update_obs($(hidden), true);}")
     ui = DOM.div(
         box,
-        DOM.div(list, style="position: relative; z-index: 1;", hidden=isblur),
+        list,
         dataType="add",
         dataId=string(objectid(add)),
         dataSelected="false",
@@ -74,7 +75,6 @@ function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
             thunk = get(el.options[], val, nothing)
             isnothing(thunk) && return
             el.steps[] = insert_item(_steps, addnewcard_index, thunk())
-            # TODO: add callbacks to card and make insertion smoother
         end
     end
     return add

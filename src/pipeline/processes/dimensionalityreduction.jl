@@ -63,8 +63,6 @@ function DimensionalityReduction(table::Observable)
     return DimensionalityReduction(table, card)
 end
 
-# TODO: force user to specify `dims`
-
 function (dimres::DimensionalityReduction)(data)
     card = dimres.card
     inputs_call = only(card.inputs.parsed)

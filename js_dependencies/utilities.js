@@ -45,13 +45,6 @@ const utilities = (function () {
         }
     }
 
-    // FIXME: may not be necessary
-    function addClass(node, cs) {
-        for (const c of cs.split(' ')) {
-            node.classList.add(c);
-        }
-    }
-
     function updateSelection(node, event, selected) {
         const tgt = event.target;
         const cards = node.querySelectorAll("[data-type='card']");
@@ -97,7 +90,6 @@ const utilities = (function () {
         cycle,
         styleSelected,
         readFiles,
-        addClass,
         updateSelection,
         trackPixelRatio,
     }

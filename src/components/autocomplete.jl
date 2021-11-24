@@ -20,20 +20,18 @@ end
 
 function jsrender(session::Session, wdg::Autocomplete)
 
-    isblur = Observable(true)
-    selected = Observable{Union{Int, Nothing}}(nothing) # 0-based indexing
-    keydown = Observable("")
+    hidden, keydown = wdg.list.hidden,wdg.list.keydown
 
     list = jsrender(session, wdg.list)
 
     input = DOM.input(
-        onfocus=js"JSServe.update_obs($(isblur), false)", # FIXME: figure out exactly focus / blur / list
+        onfocus=js"JSServe.update_obs($(hidden), false)",
         onblur=js"""
             const tgt = event.relatedTarget;
             if (tgt && $(list).contains(tgt)) {
                 this.focus();
             } else {
-                JSServe.update_obs($(isblur), true);
+                JSServe.update_obs($(hidden), true);
             }
         """,
         class="w-full",
@@ -42,42 +40,10 @@ function jsrender(session::Session, wdg::Autocomplete)
         spellcheck=false,
         value=wdg.value,
         oninput=js"JSServe.update_obs($(wdg.value), this.value)",
-        onkeydown=js"JSServe.update_obs($(keydown), event.key)"
+        onkeydown=js"event.key == 'Escape' ? this.blur() : JSServe.update_obs($(keydown), event.key)"
     )
 
-    div = DOM.div(
-        input,
-        DOM.div(style="position: relative; z-index: 1;", hidden=isblur, list),
-    )
-
-    activeClasses = ("text-gray-900", "bg-gray-200")
-    inactiveClasses = ("text-gray-700",)
-    itemclass = "px-4 py-2 bg-white $(join(inactiveClasses, ' ')) $(join("hover:" .* activeClasses, ' '))"
-
-    # Add behavior when user presses key
-    onjs(session, keydown, js"""
-        function(key) {
-            const selected = JSServe.get_observable($(selected));
-            const children = $(list).children;
-            const len = children.length;
-            if (key == "ArrowDown") {
-                JSServe.update_obs($(selected), $(UtilitiesJS).cycle(selected, len, 1))
-            } else if (key == "ArrowUp") {
-                JSServe.update_obs($(selected), $(UtilitiesJS).cycle(selected, len, -1))
-            } else if (key == "Enter" || key == "Tab") {
-                if (selected !== null && len > 0) {
-                    const child = children[selected];
-                    JSServe.update_obs($(wdg.value), child.dataset.value);
-                }
-            } else if (key == "Escape") {
-                $(input).blur();
-            }
-        }
-    """)
-
-    onjs(session, selected, js"idx => $(UtilitiesJS).styleSelected($(list).children, idx, $activeClasses, $inactiveClasses)")
-    # When out of focus, unselect
-    onjs(session, isblur, js"isblur => isblur && JSServe.update_obs($(selected), null)")
+    ui = DOM.div(input, list)
 
     onjs(session, wdg.value, js"""
         function (value) {
@@ -100,13 +66,12 @@ function jsrender(session::Session, wdg::Autocomplete)
             const keys = list.filter(text => text && text.toLowerCase().startsWith(slice.toLowerCase()));
             const values = keys.map(key => value.slice(0, idx + 1) + key);
             JSServe.update_obs($(wdg.list.entries), {keys, values});
-            JSServe.update_obs($(selected), null);
         }
     """)
 
     notify!(wdg.value)
 
-    return jsrender(session, div)
+    return jsrender(session, ui)
 end
 
 struct RichTextField
