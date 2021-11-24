@@ -1,11 +1,19 @@
-# TODO: add `selected` `Observable` here as well 
-struct List
+Base.@kwdef struct List
     entries::Observable{Dict{String, Vector{String}}}
     value::Observable{String}
+    selected::Observable{Union{Int, Nothing}}=Observable{Union{Int, Nothing}}(nothing) # 0-based indexing
+    hidden::Observable{Bool}=Observable(true)
+    keydown::Observable{String}=Observable("")
 end
 
-List(entries::Observable{Dict{String, Vector{String}}}) = List(entries, Observable(""))
-List(keys::Observable{Vector{String}}, value::Observable{String}=Observable("")) = List(lift(to_entries, keys), value)
+function List(keys::Observable{Vector{String}}, value::Observable{String}; kwargs...)
+    entries = lift(to_entries, keys)
+    return List(; entries, value, kwargs...)
+end
+
+function List(entries::Observable{Dict{String, Vector{String}}}, value::Observable{String}; kwargs...)
+    return List(; entries, value, kwargs...)
+end
 
 function to_entries(keys::AbstractVector{<:AbstractString})
     return Dict("keys" => collect(String, keys), "values" => collect(String, keys))
@@ -18,10 +26,12 @@ function jsrender(session::Session, l::List)
     fixedClasses = ["cursor-pointer", "px-4", "py-2", "bg-white"]
     itemClasses = vcat(fixedClasses, inactiveClasses, "hover:" .* activeClasses)
 
-    list = DOM.ul(
+    hidden, selected = l.hidden, l.selected
+
+    list = DOM.ul(;
         class="border-2 border-gray-200 max-h-64",
         role="menu",
-        style="position: absolute; left:0; right:0; top:0.5rem; overflow-y: scroll;",
+        style="position: absolute; left:0; right:0; top:0.5rem; overflow-y: scroll;"
     )
 
     onjs(session, l.entries, js"""
@@ -52,6 +62,32 @@ function jsrender(session::Session, l::List)
         }
     """)
 
+    # Add behavior when user presses key
+    onjs(session, l.keydown, js"""
+        function(key) {
+            const selected = JSServe.get_observable($(selected));
+            const children = $(list).children;
+            const len = children.length;
+            if (key == "ArrowDown") {
+                JSServe.update_obs($(selected), $(UtilitiesJS).cycle(selected, len, 1))
+            } else if (key == "ArrowUp") {
+                JSServe.update_obs($(selected), $(UtilitiesJS).cycle(selected, len, -1))
+            } else if (key == "Enter" || key == "Tab") {
+                if (selected !== null && len > 0) {
+                    const child = children[selected];
+                    JSServe.update_obs($(l.value), child.dataset.value);
+                }
+            }
+        }
+    """)
+
+    # Style selected options
+    onjs(session, selected, js"idx => $(UtilitiesJS).styleSelected($(list).children, idx, $activeClasses, $inactiveClasses)")
+    # When out of focus, unselect
+    onjs(session, hidden, js"hidden => hidden && JSServe.update_obs($(selected), null)")
+
     notify!(l.entries)
-    return jsrender(session, list)
+
+    ui = DOM.div(list; style="position: relative; z-index: 1;", hidden)
+    return jsrender(session, ui)
 end
