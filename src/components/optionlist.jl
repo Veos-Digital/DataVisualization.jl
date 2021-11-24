@@ -42,7 +42,7 @@ function jsrender(session::Session, l::List)
                     node.onclick = function (event) {
                         JSServe.update_obs($(l.value), event.target.dataset.value);
                     };
-                    node.classList.add(...classes));
+                    node.classList.add(...classes);
                     list.appendChild(node);
                 }
                 const child = list.children[i];
