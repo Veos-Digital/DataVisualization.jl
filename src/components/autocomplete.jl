@@ -20,9 +20,7 @@ end
 
 function jsrender(session::Session, wdg::Autocomplete)
 
-    hidden = wdg.list.hidden
-    selected = wdg.list.selected
-    keydown = wdg.list.keydown
+    hidden, keydown = wdg.list.hidden,wdg.list.keydown
 
     list = jsrender(session, wdg.list)
 
@@ -68,7 +66,6 @@ function jsrender(session::Session, wdg::Autocomplete)
             const keys = list.filter(text => text && text.toLowerCase().startsWith(slice.toLowerCase()));
             const values = keys.map(key => value.slice(0, idx + 1) + key);
             JSServe.update_obs($(wdg.list.entries), {keys, values});
-            JSServe.update_obs($(selected), null);
         }
     """)
 

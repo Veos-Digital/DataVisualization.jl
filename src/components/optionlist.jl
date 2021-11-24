@@ -59,6 +59,7 @@ function jsrender(session::Session, l::List)
                 child.innerText = keys[i];
                 child.dataset.value = values[i];
             }
+            JSServe.update_obs($(selected), null);
         }
     """)
 
