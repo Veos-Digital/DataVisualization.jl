@@ -34,29 +34,19 @@ function jsrender(session::Session, tracker::StateTracker)
 end
 
 struct ErrorContainer
-    error::Observable{Union{String, Nothing}}
+    hidden::Observable{Bool}
+    error::Observable{String}
 end
 
 function jsrender(session::Session, ec::ErrorContainer)
-    # class = map(session, ec.error, result=Observable{String}()) do error
-    #     isnothing(error) 
-    # ui = DOM.div()
-    # is_error = map(==(errored), session, tracker.state, tracker.edited, result=Observable{Bool}()) do state, edited
-    #     baseclass = "float-right text-2xl pr-4 inline-block"
-    #     edited && return "$(baseclass) text-yellow-600"
-    #     state == inactive && return "$(baseclass) text-transparent"
-    #     state in (scheduled, computing) && return "$(baseclass) text-blue-600 animate-pulse"
-    #     state == done && return "$(baseclass) text-blue-800"
-    #     state == errored && return "$(baseclass) text-red-800"
-    #     throw(ArgumentError("Invalid state $state"))
-    # end
-    # ui = DOM.span("⬤", class=class[])
-    # onjs(session, class, js"""
-    #     function (className) {
-    #         $(ui).className = className;
-    #     }
-    # """)
-    return jsrender(session, DOM.div())
+    p = DOM.p(ec.error[])
+    ui = DOM.div(p; ec.hidden, class="p-8 bg-white border-2 border-red-800")
+    onjs(session, ec.error, js"""
+        function (value) {
+            $(p).innerText = value;
+        }
+    """)
+    return jsrender(session, ui)
 end
 
 struct ProcessingCard
@@ -148,24 +138,29 @@ function columns_out(card::ProcessingCard)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
-    error = map(session, card.state, card.error, result=Observable{Union{String, Nothing}}()) do state, error
-        return state == errored ? error : nothing
-    end
-    ui = DOM.div(
+    statetracker = StateTracker(card.state, card.edited)
+    hide_error = map(!=(errored), session, card.state, result=Observable{Bool}())
+    errorcontainer = ErrorContainer(hide_error, card.error)
+
+    card_ui = DOM.div(
         DOM.span(string(card.name), class="text-blue-800 text-2xl font-semibold"),
         DOM.span(
             "✕",
             class="text-red-800 hover:text-red-900 text-2xl font-semibold float-right cursor-pointer",
             onclick=js"JSServe.update_obs($(card.destroy), true)"
         ),
-        StateTracker(card.state, card.edited),
+        statetracker,
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
-        ErrorContainer(error),
         class="select-none p-8 shadow bg-white border-2 border-transparent",
         dataId=string(objectid(card)),
         dataType="card",
         dataSelected="false",
     )
+    ui = DOM.div(
+        card_ui,
+        errorcontainer
+    )
+
     return jsrender(session, ui)
 end

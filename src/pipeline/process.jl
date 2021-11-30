@@ -102,8 +102,8 @@ function compute_pipeline(f, input, cache, steps)
                 end
                 step.card.state[] = done
             catch e
+                step.card.error[] = sprint(showerror, e)
                 step.card.state[] = errored
-                # step.card.error[] = sprint(showerror, e)
             end
         else
             step.card.state[] = inactive
