@@ -7,6 +7,8 @@ columns_out(step::AbstractProcessingStep) = columns_out(step.card)
 
 @enum State inactive scheduled computing done errored
 
+shouldrun(state::State) = state ∉ (inactive, done)
+
 struct StateTracker
     state::Observable{State}
     edited::Observable{Bool}
@@ -31,7 +33,31 @@ function jsrender(session::Session, tracker::StateTracker)
     return jsrender(session, ui)
 end
 
-shouldrun(state::State) = state ∉ (inactive, done)
+struct ErrorContainer
+    error::Observable{Union{String, Nothing}}
+end
+
+function jsrender(session::Session, ec::ErrorContainer)
+    # class = map(session, ec.error, result=Observable{String}()) do error
+    #     isnothing(error) 
+    # ui = DOM.div()
+    # is_error = map(==(errored), session, tracker.state, tracker.edited, result=Observable{Bool}()) do state, edited
+    #     baseclass = "float-right text-2xl pr-4 inline-block"
+    #     edited && return "$(baseclass) text-yellow-600"
+    #     state == inactive && return "$(baseclass) text-transparent"
+    #     state in (scheduled, computing) && return "$(baseclass) text-blue-600 animate-pulse"
+    #     state == done && return "$(baseclass) text-blue-800"
+    #     state == errored && return "$(baseclass) text-red-800"
+    #     throw(ArgumentError("Invalid state $state"))
+    # end
+    # ui = DOM.span("⬤", class=class[])
+    # onjs(session, class, js"""
+    #     function (className) {
+    #         $(ui).className = className;
+    #     }
+    # """)
+    return jsrender(session, DOM.div())
+end
 
 struct ProcessingCard
     name::Symbol
@@ -122,6 +148,9 @@ function columns_out(card::ProcessingCard)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
+    error = map(session, card.state, card.error, result=Observable{Union{String, Nothing}}()) do state, error
+        return state == errored ? error : nothing
+    end
     ui = DOM.div(
         DOM.span(string(card.name), class="text-blue-800 text-2xl font-semibold"),
         DOM.span(
@@ -132,6 +161,7 @@ function jsrender(session::Session, card::ProcessingCard)
         StateTracker(card.state, card.edited),
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
+        ErrorContainer(error),
         class="select-none p-8 shadow bg-white border-2 border-transparent",
         dataId=string(objectid(card)),
         dataType="card",
