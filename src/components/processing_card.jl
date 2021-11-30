@@ -7,6 +7,29 @@ columns_out(step::AbstractProcessingStep) = columns_out(step.card)
 
 @enum State inactive scheduled computing done errored edited
 
+struct StateTracker
+    state::Observable{State}
+end
+
+function jsrender(session::Session, tracker::StateTracker)
+    class = map(session, tracker.state, result=Observable{String}()) do state
+        baseclass = "float-right text-2xl pr-4 inline-block"
+        state == inactive && return "$(baseclass) text-transparent"
+        state in (scheduled, computing) && return "$(baseclass) text-blue-800 animate-pulse"
+        state == done && return "$(baseclass) text-blue-800"
+        state == errored && return "$(baseclass) text-red-800"
+        state == edited && return "$(baseclass) text-yellow-800"
+        throw(ArgumentError("Invalid state $state"))
+    end
+    ui = DOM.span("⬤", class=class[])
+    onjs(session, class, js"""
+        function (className) {
+            $(ui).className = className;
+        }
+    """)
+    return jsrender(session, ui)
+end
+
 shouldrun(state::State) = state ∉ (inactive, done)
 
 struct ProcessingCard
@@ -90,6 +113,7 @@ function jsrender(session::Session, card::ProcessingCard)
             class="text-red-800 hover:text-red-900 text-2xl font-semibold float-right cursor-pointer",
             onclick=js"JSServe.update_obs($(card.destroy), true)"
         ),
+        StateTracker(card.state),
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
         class="select-none p-8 shadow bg-white border-2 border-transparent",
