@@ -17,12 +17,9 @@ function Process(table::Observable{T}) where {T}
         return function ()
             step = type(value)
             card = step.card
-            # May be safer to have separate `Observable`s controlling this
-            on(card.state) do state
-                if shouldrun(state)
+            on(card.run) do _
+                if shouldrun(card.state[])
                     value[] = compute_pipeline(table[], value[], steps[])
-                    # TODO: contemplate error case
-                    card.state[] = done
                 end
             end
             on(card.destroy) do val
@@ -39,9 +36,6 @@ function Process(table::Observable{T}) where {T}
     end
     options = Observable(to_stringdict(map(thunkify, available_processing_steps)))
     process = Process(table, EditableList(options, steps), value)
-    for step in steps[]
-        add_callbacks!(step, process)
-    end
     on(table) do data
         _steps = steps[]
         # TODO: contemplate error case

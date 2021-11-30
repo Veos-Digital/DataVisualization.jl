@@ -41,6 +41,7 @@ struct ProcessingCard
     process_button::Button
     clear_button::Button
     state::Observable{State}
+    run::Observable{Bool}
     destroy::Observable{Bool}
 end
 
@@ -50,12 +51,14 @@ end
 
 function process!(card::ProcessingCard)
     foreach(parse!, autocompletes(card))
-    card.state[] = computing
+    card.state[] = scheduled
+    card.run[] = true
 end
 
 function clear!(card::ProcessingCard)
     foreach(reset!, autocompletes(card))
-    card.state[] = computing
+    card.state[] = scheduled
+    card.run[] = true
 end
 
 function ProcessingCard(name;
@@ -66,6 +69,7 @@ function ProcessingCard(name;
                         process_button=Button("Process", class=buttonclass(true)),
                         clear_button=Button("Clear", class=buttonclass(false)),
                         state=Observable(inactive),
+                        run=Observable(false),
                         destroy = Observable(false))
 
     card = ProcessingCard(
@@ -77,6 +81,7 @@ function ProcessingCard(name;
         process_button,
         clear_button,
         state,
+        run,
         destroy
     )
 
