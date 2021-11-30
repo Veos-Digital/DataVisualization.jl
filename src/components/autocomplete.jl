@@ -45,7 +45,7 @@ function jsrender(session::Session, wdg::Autocomplete)
 
     ui = DOM.div(input, list)
 
-    onvalue = js"""
+    onjs(session, wdg.value, js"""
         function (value) {
             const options = JSServe.get_observable($(wdg.options));
             const pre = options.map(e => e[0]);
@@ -67,11 +67,9 @@ function jsrender(session::Session, wdg::Autocomplete)
             const values = keys.map(key => value.slice(0, idx + 1) + key);
             JSServe.update_obs($(wdg.list.entries), {keys, values});
         }
-    """
+    """)
 
-    onjs(session, wdg.value, onvalue)
-
-    evaljs(session, js"($(onvalue))($(wdg.value[]));")
+    notify!(wdg.value)
 
     return jsrender(session, ui)
 end
