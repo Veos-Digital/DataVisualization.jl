@@ -15,10 +15,10 @@ function jsrender(session::Session, tracker::StateTracker)
     class = map(session, tracker.state, result=Observable{String}()) do state
         baseclass = "float-right text-2xl pr-4 inline-block"
         state == inactive && return "$(baseclass) text-transparent"
-        state in (scheduled, computing) && return "$(baseclass) text-blue-800 animate-pulse"
+        state in (scheduled, computing) && return "$(baseclass) text-blue-600 animate-pulse"
         state == done && return "$(baseclass) text-blue-800"
         state == errored && return "$(baseclass) text-red-800"
-        state == edited && return "$(baseclass) text-yellow-800"
+        state == edited && return "$(baseclass) text-yellow-600"
         throw(ArgumentError("Invalid state $state"))
     end
     ui = DOM.span("⬤", class=class[])
@@ -87,7 +87,11 @@ function ProcessingCard(name;
 
     on(_ ->  process!(card), process_button.value)
     on(_ ->  clear!(card), clear_button.value)
-
+    for autocomplete in autocompletes(card)
+        on(autocomplete.widget.value) do _
+            card.state[] = edited
+        end
+    end
     return card
 end
 
