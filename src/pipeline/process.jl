@@ -19,10 +19,10 @@ function Process(table::Observable{T}) where {T}
             card = step.card
             # May be safer to have separate `Observable`s controlling this
             on(card.state) do state
-                if state != :done
+                if shouldrun(state)
                     value[] = compute_pipeline(table[], value[], steps[])
                     # TODO: contemplate error case
-                    card.state[] = :done
+                    card.state[] = done
                 end
             end
             on(card.destroy) do val
@@ -47,7 +47,7 @@ function Process(table::Observable{T}) where {T}
         # TODO: contemplate error case
         value[] = compute_pipeline(always_true, data, value[], _steps)
         for step in _steps
-            step.card.state[] = :done
+            step.card.state[] = done
         end
     end
     return process
@@ -61,7 +61,7 @@ function jsrender(session::Session, process::Process)
     return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end
 
-default_needs_update(step) = step.card.state[] != :done
+default_needs_update(step) = shouldrun(step.card.state[])
 always_true(step) = true
 
 nodes_to_compute(steps) = nodes_to_compute(default_needs_update, steps)
@@ -106,8 +106,8 @@ function compute_pipeline(f, input, cache, steps)
                 throw(ArgumentError("Overwriting table is not allowed"))
             end
         end
-        # TODO: add `:errored` state if the above fails
-        step.card.state[] = :done
+        # TODO: use `errored` state if the above fails
+        step.card.state[] = done
     end
     return result
 end

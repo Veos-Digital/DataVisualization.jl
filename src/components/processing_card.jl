@@ -5,6 +5,10 @@ jsrender(session::Session, step::AbstractProcessingStep) = jsrender(session, ste
 columns_in(step::AbstractProcessingStep) = columns_in(step.card)
 columns_out(step::AbstractProcessingStep) = columns_out(step.card)
 
+@enum State inactive scheduled computing done errored edited
+
+shouldrun(state::State) = state ∉ (inactive, done)
+
 struct ProcessingCard
     name::Symbol
     inputs::RichTextField
@@ -13,7 +17,7 @@ struct ProcessingCard
     rename::RichTextField
     process_button::Button
     clear_button::Button
-    state::Observable{Symbol}
+    state::Observable{State}
     destroy::Observable{Bool}
 end
 
@@ -23,12 +27,12 @@ end
 
 function process!(card::ProcessingCard)
     foreach(parse!, autocompletes(card))
-    card.state[] = :computing
+    card.state[] = computing
 end
 
 function clear!(card::ProcessingCard)
     foreach(reset!, autocompletes(card))
-    card.state[] = :computing
+    card.state[] = computing
 end
 
 function ProcessingCard(name;
@@ -38,7 +42,7 @@ function ProcessingCard(name;
                         rename,
                         process_button=Button("Process", class=buttonclass(true)),
                         clear_button=Button("Clear", class=buttonclass(false)),
-                        state=Observable(:done),
+                        state=Observable(inactive),
                         destroy = Observable(false))
 
     card = ProcessingCard(
