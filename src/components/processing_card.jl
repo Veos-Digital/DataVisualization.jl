@@ -5,20 +5,21 @@ jsrender(session::Session, step::AbstractProcessingStep) = jsrender(session, ste
 columns_in(step::AbstractProcessingStep) = columns_in(step.card)
 columns_out(step::AbstractProcessingStep) = columns_out(step.card)
 
-@enum State inactive scheduled computing done errored edited
+@enum State inactive scheduled computing done errored
 
 struct StateTracker
     state::Observable{State}
+    edited::Observable{Bool}
 end
 
 function jsrender(session::Session, tracker::StateTracker)
-    class = map(session, tracker.state, result=Observable{String}()) do state
+    class = map(session, tracker.state, tracker.edited, result=Observable{String}()) do state, edited
         baseclass = "float-right text-2xl pr-4 inline-block"
+        edited && return "$(baseclass) text-yellow-600"
         state == inactive && return "$(baseclass) text-transparent"
         state in (scheduled, computing) && return "$(baseclass) text-blue-600 animate-pulse"
         state == done && return "$(baseclass) text-blue-800"
         state == errored && return "$(baseclass) text-red-800"
-        state == edited && return "$(baseclass) text-yellow-600"
         throw(ArgumentError("Invalid state $state"))
     end
     ui = DOM.span("⬤", class=class[])
@@ -41,6 +42,7 @@ struct ProcessingCard
     process_button::Button
     clear_button::Button
     state::Observable{State}
+    edited::Observable{Bool}
     run::Observable{Bool}
     destroy::Observable{Bool}
 end
@@ -69,6 +71,7 @@ function ProcessingCard(name;
                         process_button=Button("Process", class=buttonclass(true)),
                         clear_button=Button("Clear", class=buttonclass(false)),
                         state=Observable(inactive),
+                        edited=Observable(false),
                         run=Observable(false),
                         destroy = Observable(false))
 
@@ -81,17 +84,18 @@ function ProcessingCard(name;
         process_button,
         clear_button,
         state,
+        edited,
         run,
         destroy
     )
 
     on(_ ->  process!(card), process_button.value)
     on(_ ->  clear!(card), clear_button.value)
-    for autocomplete in autocompletes(card)
-        on(autocomplete.widget.value) do _
-            card.state[] = edited
-        end
+    confirmed = map(autocompletes(card)) do textfield
+        return lift(==, textfield.widget.value, textfield.confirmedvalue)
     end
+    map!(!all∘tuple, card.edited, confirmed...)
+
     return card
 end
 
@@ -122,7 +126,7 @@ function jsrender(session::Session, card::ProcessingCard)
             class="text-red-800 hover:text-red-900 text-2xl font-semibold float-right cursor-pointer",
             onclick=js"JSServe.update_obs($(card.destroy), true)"
         ),
-        StateTracker(card.state),
+        StateTracker(card.state, card.edited),
         autocompletes(card)...,
         DOM.div(class="mt-12", card.process_button, card.clear_button),
         class="select-none p-8 shadow bg-white border-2 border-transparent",

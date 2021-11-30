@@ -81,10 +81,11 @@ struct RichTextField
     widget::Autocomplete
     default::String
     parsed::Vector{Call}
+    confirmedvalue::Observable{String}
 end
 
 function RichTextField(name, widget::Autocomplete, default)
-    rtf = RichTextField(name, widget, default, Call[])
+    rtf = RichTextField(name, widget, default, Call[], Observable(widget.value[]))
     parse!(rtf)
     return rtf
 end
@@ -95,8 +96,11 @@ function RichTextField(name, options, default)
 end
 
 function parse!(rtf::RichTextField)
+    value = rtf.widget.value[]
     empty!(rtf.parsed)
-    append!(rtf.parsed, compute_calls(rtf.widget.value[]))
+    append!(rtf.parsed, compute_calls(value))
+    rtf.confirmedvalue[] = value
+    return
 end
 
 function reset!(rtf::RichTextField)
