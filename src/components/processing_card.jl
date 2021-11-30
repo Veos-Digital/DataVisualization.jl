@@ -43,6 +43,7 @@ struct ProcessingCard
     clear_button::Button
     state::Observable{State}
     edited::Observable{Bool}
+    error::Observable{String}
     run::Observable{Bool}
     destroy::Observable{Bool}
 end
@@ -72,6 +73,7 @@ function ProcessingCard(name;
                         clear_button=Button("Clear", class=buttonclass(false)),
                         state=Observable(inactive),
                         edited=Observable(false),
+                        error=Observable(""),
                         run=Observable(false),
                         destroy = Observable(false))
 
@@ -85,6 +87,7 @@ function ProcessingCard(name;
         clear_button,
         state,
         edited,
+        error,
         run,
         destroy
     )

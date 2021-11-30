@@ -96,12 +96,18 @@ function compute_pipeline(f, input, cache, steps)
     for node in nodes
         step = steps[node]
         if !isempty(columns_in(step))
-            mergewith!(result, step(result)) do _, _
-                throw(ArgumentError("Overwriting table is not allowed"))
+            try
+                mergewith!(result, step(result)) do _, _
+                    throw(ArgumentError("Overwriting table is not allowed"))
+                end
+                step.card.state[] = done
+            catch e
+                step.card.state[] = errored
+                step.card.error[] = sprint(showerror, e)
             end
+        else
+            step.card.state[] = inactive
         end
-        # TODO: use `errored` state if the above fails
-        step.card.state[] = done
     end
     return result
 end
