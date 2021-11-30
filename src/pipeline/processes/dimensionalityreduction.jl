@@ -25,13 +25,22 @@ _fit(::Type{PPCA}, X; dims, kwargs...) = fit(PPCA, X; maxoutdim=dims, kwargs...)
 _fit(::Type{FactorAnalysis}, X; dims, kwargs...) = fit(FactorAnalysis, X; maxoutdim=dims, kwargs...)
 _fit(::Type{ICA}, X; dims, kwargs...) = fit(ICA, X, dims; kwargs...)
 
+function test_dims(output; dims)
+    _dims = size(output, 1)
+    (_dims < dims) && error("Could only find $_dims dimensions. $dims were requested.")
+    (_dims > dims) && error("Found too many dimensions.") # Should never happen
+    return output
+end
+
 function project(an, data; dims, kwargs...)
     anres = _fit(an, data; dims, kwargs...)
-    return transform(anres, data)
+    output = transform(anres, data)
+    return test_dims(output; dims)
 end
 
 function project(::Type{MDS}, data; dims, distance=Euclidean(), kwargs...)
-    return classical_mds(pairwise(distance, data, dims=2), dims; kwargs...)
+    output = classical_mds(pairwise(distance, data, dims=2), dims; kwargs...)
+    return test_dims(output; dims)
 end
 
 const dimensionalityreductions = (

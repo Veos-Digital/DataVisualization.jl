@@ -17,12 +17,9 @@ function Process(table::Observable{T}) where {T}
         return function ()
             step = type(value)
             card = step.card
-            # May be safer to have separate `Observable`s controlling this
-            on(card.state) do state
-                if state != :done
+            on(card.run) do _
+                if shouldrun(card.state[])
                     value[] = compute_pipeline(table[], value[], steps[])
-                    # TODO: contemplate error case
-                    card.state[] = :done
                 end
             end
             on(card.destroy) do val
@@ -39,15 +36,12 @@ function Process(table::Observable{T}) where {T}
     end
     options = Observable(to_stringdict(map(thunkify, available_processing_steps)))
     process = Process(table, EditableList(options, steps), value)
-    for step in steps[]
-        add_callbacks!(step, process)
-    end
     on(table) do data
         _steps = steps[]
         # TODO: contemplate error case
         value[] = compute_pipeline(always_true, data, value[], _steps)
         for step in _steps
-            step.card.state[] = :done
+            step.card.state[] = done
         end
     end
     return process
@@ -61,7 +55,7 @@ function jsrender(session::Session, process::Process)
     return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
 end
 
-default_needs_update(step) = step.card.state[] != :done
+default_needs_update(step) = shouldrun(step.card.state[])
 always_true(step) = true
 
 nodes_to_compute(steps) = nodes_to_compute(default_needs_update, steps)
@@ -102,12 +96,18 @@ function compute_pipeline(f, input, cache, steps)
     for node in nodes
         step = steps[node]
         if !isempty(columns_in(step))
-            mergewith!(result, step(result)) do _, _
-                throw(ArgumentError("Overwriting table is not allowed"))
+            try
+                mergewith!(result, step(result)) do _, _
+                    throw(ArgumentError("Overwriting table is not allowed"))
+                end
+                step.card.state[] = done
+            catch e
+                step.card.error[] = sprint(showerror, e)
+                step.card.state[] = errored
             end
+        else
+            step.card.state[] = inactive
         end
-        # TODO: add `:errored` state if the above fails
-        step.card.state[] = :done
     end
     return result
 end
