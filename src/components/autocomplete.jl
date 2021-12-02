@@ -90,7 +90,7 @@ function RichTextField(name, widget::Autocomplete, default)
 end
 
 function RichTextField(name, options, default)
-    wdg = Autocomplete(Observable(default), lift(to_autocomplete_options, convert(Observable, options)))
+    wdg = Autocomplete(Observable(default), options)
     return RichTextField(name, wdg, default)
 end
 
