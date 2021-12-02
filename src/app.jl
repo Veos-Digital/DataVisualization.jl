@@ -21,14 +21,16 @@ end
 _concatenate(::Tuple{}, value) = ()
 
 """
-    UI(table, tabs=(:Load, :Filter, :Process))
+    UI(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:SpreadSheet, :Chart))
 
-Generate a `UI` with a given table as starting value. `tabs` denote the list of
-tabs to include in the user interface. Each tab can take one of the following types:
+Generate a `UI` with a given table as starting value. `pipelinetabs` denote the list of
+pipeline tabs to include in the user interface. Each tab can take one of the following types:
 `:Load, :Filter, :Process`.
 Repetitions are allowed, for example setting
 `tabs=(:Load, :Filter, :Process, :Filter)` would generate a `UI` that
 allowes filtering both before and after processing the data.
+`visualizationtabs` includes the list of visualization tabs to be included in the UI.
+Possible values are `:SpreadSheet` and `Chart`.
 """
 function UI(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
     pipelines = concatenate(pipelinetabs, Observable(to_littledict(table)))
@@ -49,9 +51,9 @@ function jsrender(session::Session, ui::UI)
 end
 
 """
-    app(table, tabs=(:Load, :Filter, :Process))
+    app(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:SpreadSheet, :Chart))
 
-Generate a [`UI`](@ref) with a given `table` and list of `tabs`.
+Generate a [`UI`](@ref) with a given `table` and lists of pipeline and visualization tabs.
 Launch the output as a local app.
 """
 function app(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
@@ -61,14 +63,16 @@ function app(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VIS
 end
 
 """
-    serve(table, tabs=(:Load, :Filter, :Process, :Visualize);
+    serve(table;
+          pipelinetabs=(:Load, :Filter, :Process),
+          visualizationtabs=(:SpreadSheet, :Chart),
           url=Sockets.localhost, port=8081)
 
-Generate a [`UI`](@ref) with a given `table` and list of `tabs`.
+Generate a [`UI`](@ref) with a given `table` and lists of pipeline and visualization tabs.
 Serve the output at the given `url` and `port`.
 Return a `JSServe.Server` object.
 """
-function serve(table; url=Sockets.localhost, port=8081,
+function serve(table; url=Sockets.localhost, port=8081, verbose=true,
                pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
-    return Server(app(table; pipelinetabs, visualizationtabs), string(url), port)
+    return Server(app(table; pipelinetabs, visualizationtabs), string(url), port; verbose)
 end
