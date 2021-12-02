@@ -34,17 +34,9 @@ function jsrender(session::Session, add::AddNewCard)
     return jsrender(session, ui)
 end
 
-const StringLittleDict{T} = LittleDict{String, T, Vector{String}, Vector{T}}
-
-function to_stringdict(p)
-    k = String[string(key) for key in keys(p)]
-    v = Any[v for v in values(p)]
-    return LittleDict(k, v)
-end
-
 struct EditableList
     keys::Observable{Vector{String}}
-    options::Observable{StringLittleDict{Any}}
+    options::Observable{Dict{String, Vector}}
     steps::Observable{Vector{Any}}
     selected::Observable{Vector{String}}
     list::Observable{Vector{Any}}
@@ -72,8 +64,10 @@ function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
             step_index = first(step_indices)
             el.steps[] = move_item(_steps, step_index => addnewcard_index - (addnewcard_index > step_index))
         else
-            thunk = get(el.options[], val, nothing)
-            isnothing(thunk) && return
+            options = el.options[]
+            idx = findfirst(==(val), options["keys"])
+            isnothing(idx) && return
+            thunk = options["values"][idx]
             el.steps[] = insert_item(_steps, addnewcard_index, thunk())
         end
     end
@@ -82,13 +76,7 @@ end
 
 function EditableList(options::Observable, steps::Observable)
     selected = Observable(String[])
-    keys = lift(options) do options
-        acc = ["Move Selected"]
-        for key in Base.keys(options)
-            push!(acc, key)
-        end
-        return acc
-    end
+    keys = lift(o -> vcat("Move Selected", o["keys"]), options)
     list = Observable{Vector{Any}}()
     el = EditableList(keys, options, steps, selected, list)
     map!(list, steps) do steps

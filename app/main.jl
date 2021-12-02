@@ -8,3 +8,4 @@ update_theme!(fontsize=28)
 
 (@isdefined server) && close(server)
 server = DataVisualization.serve(penguins, url="0.0.0.0", port=9000)
+nothing

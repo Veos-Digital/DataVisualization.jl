@@ -1,4 +1,4 @@
-const available_processing_steps = (
+const PROCESSING_STEPS = (
     Predict = LinearModel,
     Cluster = Cluster,
     Project = DimensionalityReduction,
@@ -34,7 +34,7 @@ function Process(table::Observable{T}) where {T}
             return step
         end
     end
-    options = Observable(to_stringdict(map(thunkify, available_processing_steps)))
+    options = Observable(to_stringdict(map(thunkify, PROCESSING_STEPS)))
     process = Process(table, EditableList(options, steps), value)
     on(table) do data
         _steps = steps[]

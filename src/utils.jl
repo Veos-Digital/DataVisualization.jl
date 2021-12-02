@@ -9,6 +9,7 @@ function data_options(t::Observable; keywords=[""])
     end
 end
 
+# This simple untyped dictionary is the preferred way to store tables
 function to_littledict(data)
     cols = Tables.columns(data)
     names = collect(Symbol, Tables.columnnames(cols))
@@ -19,6 +20,10 @@ end
 iscontinuous(v::AbstractVector) = false
 iscontinuous(v::AbstractVector{<:Number}) = true
 iscontinuous(v::AbstractVector{<:Bool}) = false
+
+# convert to dict with fields `"keys"` and `"values"`, as it is the simplest way to share
+# ordered associative containers with JavaScript
+to_stringdict(p) = Dict("keys" => [string(key) for key in keys(p)], "values" => collect(values(p)))
 
 function buttonclass(positive)
     class = "text-xl font-semibold rounded text-left py-2 px-4 bg-opacity-75"
@@ -79,8 +84,6 @@ for sym in (:on, :onany)
         end
     end
 end
-
-mapkeys(f, names::Tuple) = NamedTuple{names}(map(f, names))
 
 function filter_namedtuple(f, nt)
     names = filter(key -> f(nt[key]), keys(nt))
