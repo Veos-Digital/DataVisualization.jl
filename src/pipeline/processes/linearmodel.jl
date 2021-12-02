@@ -20,6 +20,7 @@ const links = (
 
 interactionterm(v) = isempty(v) ? ConstantTerm(1) : mapfoldl(term, &, v)
 
+# currently intercept is always added (with initial empty term), consider how to remove it
 function combinations(v::AbstractVector{T}) where {T}
     subsets = [T[]]
     for el in v
@@ -41,7 +42,7 @@ function LinearModel(table::Observable)
     default_names = ":prediction :error"
 
     wdgs = (
-        inputs=RichTextField("Inputs", data_options(table, keywords=["", "+ ", "* "]), ""),
+        inputs=RichTextField("Inputs", data_options(table, keywords=["+ ", "* "]), ""),
         output=RichTextField("Outputs", data_options(table, keywords=[""]), ""),
         method=RichTextField("Method", method_options, ""),
         rename=RichTextField("Rename", ["" => ["prediction", "error"]], default_names)
