@@ -2,6 +2,7 @@ const AutocompleteOptions = Vector{Tuple{String, Vector{String}}}
 
 to_autocomplete_options(options::Union{AbstractArray, Tuple}) = vecmap(Tuple, options)
 to_autocomplete_options(options::AbstractDict) = [Tuple(p) for p in pairs(options)]
+to_autocomplete_options(options::AbstractObservable) = lift(to_autocomplete_options, options)
 
 struct Autocomplete
     value::Observable{String}
@@ -14,7 +15,7 @@ function Autocomplete(value::Observable, options::Observable{AutocompleteOptions
 end
 
 function Autocomplete(value::Observable, options′)
-    options::Observable{AutocompleteOptions} = Observable(to_autocomplete_options(options′))
+    options::Observable{AutocompleteOptions} = to_autocomplete_options(options′)
     return Autocomplete(value, options)
 end
 

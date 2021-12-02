@@ -1,13 +1,13 @@
 module DataVisualization
 
 using Observables
+using Observables: to_value, AbstractObservable
 using JSServe
 using JSServe: evaljs, onjs, onload, Table, Server
 import Tables, CSV
 import JSServe: jsrender
 using Sockets
 using StructArrays: uniquesorted, finduniquesorted, components, StructArray
-using Observables: to_value
 using Makie: plot!, RGB, Axis, Scene, Figure, Makie
 using Makie: Scatter, Lines, BarPlot, BoxPlot, Violin, propertynames
 using Makie.Colors
