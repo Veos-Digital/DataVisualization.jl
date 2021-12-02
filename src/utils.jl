@@ -112,7 +112,7 @@ end
 
 function scrollable_component(args...; kwargs...)
     return DOM.div(
-        DOM.div(args...; class="absolute left-0 right-16");
+        DOM.div(args...; class="absolute left-0 right-8");
         class="overflow-y-scroll h-full w-full relative",
         kwargs...
     )

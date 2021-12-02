@@ -42,8 +42,8 @@ function jsrender(session::Session, ui::UI)
     pipelinetabs, visualizationtabs = Tabs(ui.pipelinetabs), Tabs(ui.visualizationtabs)
     layout = DOM.div(
             class="grid grid-cols-3 h-full",
-            DOM.div(class="col-span-1 pr-16", pipelinetabs),
-            DOM.div(class="col-span-2 pl-16", visualizationtabs)
+            DOM.div(class="col-span-1 pl-8", pipelinetabs),
+            DOM.div(class="col-span-2 pl-12 pr-16", visualizationtabs)
         )
     return jsrender(session, layout)
 end

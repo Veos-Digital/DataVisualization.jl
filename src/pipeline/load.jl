@@ -12,7 +12,7 @@ end
 
 function jsrender(session::Session, l::Load)
 
-    ui = FilePicker(l.files)
+    ui = scrollable_component(FilePicker(l.files))
 
     tryon(session, l.files) do files
         !isempty(files) && (l.table[] = readfiles(files))

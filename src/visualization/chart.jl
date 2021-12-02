@@ -101,8 +101,7 @@ function jsrender(session::Session, chart::Chart)
         )
         options = specs_options(session, chart.plotspecs; name)
         textbox = jsrender(session, Autocomplete(getproperty(chart.plotspecs, name), options))
-        class = name == :layers ? "" : "mb-4"
-        return DOM.div(class=class, label, DOM.div(class="pl-4", textbox))
+        return DOM.div(label, DOM.div(class="pl-4", textbox))
     end
 
     plot = Observable{Figure}(defaultplot())
@@ -122,15 +121,15 @@ function jsrender(session::Session, chart::Chart)
 
     plot_button = Button("Plot", class=buttonclass(true))
     clear_button = Button("Clear", class=buttonclass(false))
-    plotui = DOM.div(
-        DOM.div(class="flex flex-row", specs_widgets),
-        DOM.div(class="mt-12 pl-4", plot_button, clear_button)
+    ui = DOM.div(
+        DOM.div(class="grid grid-cols-2 gap-8", specs_widgets),
+        DOM.div(class="mt-8 pl-4", plot_button, clear_button),
+        DOM.div(class="mt-12 pl-4", plot)
     )
 
     tryon(update_plot!, session, plot_button.value)
     tryon(update_plot!, session, chart.plotspecs.names) # gets updated when table changes
     tryon(reset_plot!, session, clear_button.value)
 
-    layout = DOM.div(plotui, plot)
-    return jsrender(session, layout)
+    return jsrender(session, ui)
 end

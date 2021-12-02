@@ -43,7 +43,7 @@ function jsrender(session::Session, tabs::Tabs)
         return jsrender(session, content)
     end
     return DOM.div(
-        class="flex flex-col h-screen p-8",
+        class="flex flex-col h-screen py-8",
         DOM.div(class="flex-initial", headers),
         DOM.div(class="flex-auto", contents...)
     )
