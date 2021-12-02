@@ -1,5 +1,5 @@
 const PIPELINE_TABS = (; Load, Filter, Process)
-const VISUALIZATION_TABS = (; SpreadSheet, Chart)
+const VISUALIZATION_TABS = (; Spreadsheet, Chart)
 
 struct UI{P, V}
     pipelinetabs::P
@@ -21,7 +21,7 @@ end
 _concatenate(::Tuple{}, value) = ()
 
 """
-    UI(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:SpreadSheet, :Chart))
+    UI(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:Spreadsheet, :Chart))
 
 Generate a `UI` with a given table as starting value. `pipelinetabs` denote the list of
 pipeline tabs to include in the user interface. Each tab can take one of the following types:
@@ -30,7 +30,7 @@ Repetitions are allowed, for example setting
 `tabs=(:Load, :Filter, :Process, :Filter)` would generate a `UI` that
 allowes filtering both before and after processing the data.
 `visualizationtabs` includes the list of visualization tabs to be included in the UI.
-Possible values are `:SpreadSheet` and `Chart`.
+Possible values are `:Spreadsheet` and `Chart`.
 """
 function UI(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
     pipelines = concatenate(pipelinetabs, Observable(to_littledict(table)))
@@ -51,7 +51,7 @@ function jsrender(session::Session, ui::UI)
 end
 
 """
-    app(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:SpreadSheet, :Chart))
+    app(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:Spreadsheet, :Chart))
 
 Generate a [`UI`](@ref) with a given `table` and lists of pipeline and visualization tabs.
 Launch the output as a local app.
@@ -65,7 +65,7 @@ end
 """
     serve(table;
           pipelinetabs=(:Load, :Filter, :Process),
-          visualizationtabs=(:SpreadSheet, :Chart),
+          visualizationtabs=(:Spreadsheet, :Chart),
           url=Sockets.localhost, port=8081)
 
 Generate a [`UI`](@ref) with a given `table` and lists of pipeline and visualization tabs.

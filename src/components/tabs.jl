@@ -1,24 +1,24 @@
-struct Tabs{T}
-    options::Vector{Option{T}}
+struct Tabs
+    options::Dict{String, Vector}
+    activetab::Observable{Int}
 end
 
-function Tabs(nt::NamedTuple)
-    T = eltype(nt)
-    options = [Option{T}(string(key), val, true) for (key, val) in pairs(nt)]
-    return Tabs(options)
+Tabs(options::Dict{String, Vector}) = Tabs(options, Observable(1))
+function Tabs(nt::Union{AbstractDict, NamedTuple}, activetab=Observable(1))
+    options = Dict("keys" => collect(keys(nt)), "values" => collect(values(nt)))
+    return Tabs(options, activetab)
 end
 
 function jsrender(session::Session, tabs::Tabs)
-    activetab = Observable(1)
-    options = tabs.options
+    options, activetab = tabs.options, tabs.activetab
     activeClasses = ["shadow", "bg-white"]
     inactiveClasses = String[]
 
     nodes = [DOM.li(
         class="text-blue-800 text-2xl font-semibold rounded mr-4 px-4 py-2 cursor-pointer hover:bg-gray-200",
         onclick=js"JSServe.update_obs($activetab, $i)",
-        options[i].key
-    ) for i in eachindex(options)]
+        key
+    ) for (i, key) in enumerate(options["keys"])]
     headers = DOM.ul(class="flex mb-12", nodes)
 
     onjs(session, activetab, js"""
@@ -28,9 +28,9 @@ function jsrender(session::Session, tabs::Tabs)
     """)
     activetab[] = activetab[]
 
-    contents = map(eachindex(options)) do i
+    contents = map(enumerate(options["values"])) do (i, value)
         display = activetab[] == i ? "block" : "none"
-        content = DOM.div(style="display: $display;", options[i].value)
+        content = DOM.div(style="display: $display;", value)
         onjs(
             session,
             activetab,
