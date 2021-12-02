@@ -1,17 +1,15 @@
-struct Visualize{T} <: AbstractPipeline{T}
+struct Chart{T} <: AbstractVisualization{T}
     table::Observable{T}
     plotspecs::PlotSpecs
 end
 
-Visualize(table::Observable{T}) where {T} = Visualize{T}(table, PlotSpecs(table))
+Chart(table::Observable{T}) where {T} = Chart{T}(table, PlotSpecs(table))
 
-output(v::Visualize) = v.table # output equals input for `Visualize`
-
-to_algebraic(v::Visualize) = data(v.table[]) * to_algebraic(v.plotspecs)
+to_algebraic(chart::Chart) = data(chart.table[]) * to_algebraic(chart.plotspecs)
 
 defaultplot() = Figure(; backgroundcolor=colorant"#F3F4F6")
 
-function jsrender(session::Session, v::Visualize)
+function jsrender(session::Session, chart::Chart)
 
     plot = Observable{Figure}(defaultplot())
 
@@ -20,8 +18,8 @@ function jsrender(session::Session, v::Visualize)
 
     reset_plot!(_) = plot[] = defaultplot()
     function update_plot!(_)
-        is_set(v.plotspecs) || return
-        plt = to_algebraic(v)
+        is_set(chart.plotspecs) || return
+        plt = to_algebraic(chart)
         pr = pixelratio[]
         axis = (width=round(Int, 350pr), height=round(Int, 350pr))
         fg = draw(plt; axis)
@@ -31,13 +29,13 @@ function jsrender(session::Session, v::Visualize)
     plot_button = Button("Plot", class=buttonclass(true))
     clear_button = Button("Clear", class=buttonclass(false))
     plotui = DOM.div(
-        v.plotspecs,
+        chart.plotspecs,
         DOM.div(class="mt-12 pl-4", plot_button, clear_button),
         class="pr-16"
     )
 
     tryon(update_plot!, session, plot_button.value)
-    tryon(update_plot!, session, v.plotspecs.names) # gets updated when table changes
+    tryon(update_plot!, session, chart.plotspecs.names) # gets updated when table changes
     tryon(reset_plot!, session, clear_button.value)
 
     layout = DOM.div(

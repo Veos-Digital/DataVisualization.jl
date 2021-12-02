@@ -1,57 +1,56 @@
-const available_tabs = (
-    Load = Load,
-    Filter = Filter,
-    Process = Process,
-    Visualize = Visualize
-)
+const PipelineTabs = (; Load, Filter, Process)
+const VisualizationTabs = (; SpreadSheet, Chart)
 
-struct UI{T}
-    pipelines::Vector{Pair{Symbol, AbstractPipeline{T}}}
+struct UI{P, V}
+    pipelinetabs::P
+    visualizationtabs::V
 end
 
-const default_tabs = (:Load, :Filter, :Process, :Visualize)
+function Base.show(io::IO, ui::UI)
+    p, v = keys(ui.pipelinetabs), keys(ui.visualizationtabs)
+    print(io, "UI with pipelines $(p) and visualizations $(v)")
+end
+
+concatenate(names, value) = NamedTuple{names}(_concatenate(names, value))
+
+function _concatenate((p, ps...)::Tuple, value)
+    pipeline = PipelineTabs[p](value)
+    return (pipeline, _concatenate(ps, output(pipeline))...)
+end
+
+_concatenate(::Tuple{}, value) = ()
 
 """
-    UI(table, tabs=(:Load, :Filter, :Process, :Visualize))
+    UI(table, tabs=(:Load, :Filter, :Process))
 
 Generate a `UI` with a given table as starting value. `tabs` denote the list of
 tabs to include in the user interface. Each tab can take one of the following types:
-`:Load, :Filter, :Process, :Visualize`.
+`:Load, :Filter, :Process`.
 Repetitions are allowed, for example setting
-`tabs=(:Load, :Filter, :Process, :Filter, :Visualize)` would generate a `UI` that
+`tabs=(:Load, :Filter, :Process, :Filter)` would generate a `UI` that
 allowes filtering both before and after processing the data.
 """
-function UI(table, tabs=default_tabs)
-    ld = to_littledict(table)
-    obs = Observable(ld)
-    pipelines = Pair{Symbol, AbstractPipeline{typeof(ld)}}[]
-    value = obs
-    for tab in tabs
-        pipeline = available_tabs[tab](value)
-        push!(pipelines, tab => pipeline)
-        value = output(pipeline)
-    end
-    return UI(pipelines)
+function UI(table; pipelinetabs=keys(PipelineTabs), visualizationtabs=keys(VisualizationTabs))
+    pipelines = concatenate(pipelinetabs, Observable(to_littledict(table)))
+    value = output(last(pipelines))
+    visualizations = mapkeys(key -> VisualizationTabs[key](value), visualizationtabs)
+    return UI(pipelines, visualizations)
 end
 
 function jsrender(session::Session, ui::UI)
-    pipelines = map(ui.pipelines) do (name, pipeline)
-        return Option(String(name), DOM.div(pipeline), Observable(true))
-    end
-    tabs = Tabs(pipelines)
-    evaljs(session, js"document.body.classList.add('bg-gray-100');")
-    return jsrender(session, tabs)
+    pipelinetabs, visualizationtabs = Tabs(ui.pipelinetabs), Tabs(ui.visualizationtabs)
+    return jsrender(session, pipelinetabs)
 end
 
 """
-    app(table, tabs=(:Load, :Filter, :Process, :Visualize))
+    app(table, tabs=(:Load, :Filter, :Process))
 
 Generate a [`UI`](@ref) with a given `table` and list of `tabs`.
 Launch the output as a local app.
 """
-function app(table, tabs=default_tabs)
+function app(table; pipelinetabs=keys(PipelineTabs), visualizationtabs=keys(VisualizationTabs))
     return App() do
-        return DOM.div(AllCSS..., UI(table, tabs))
+        return DOM.div(AllCSS..., UI(table; pipelinetabs, visualizationtabs))
     end
 end
 
@@ -63,6 +62,7 @@ Generate a [`UI`](@ref) with a given `table` and list of `tabs`.
 Serve the output at the given `url` and `port`.
 Return a `JSServe.Server` object.
 """
-function serve(table, tabs=default_tabs; url=Sockets.localhost, port=8081)
-    return Server(app(table, tabs), string(url), port)
+function serve(table; url=Sockets.localhost, port=8081,
+               pipelinetabs=keys(PipelineTabs), visualizationtabs=keys(VisualizationTabs))
+    return Server(app(table; pipelinetabs, visualizationtabs), string(url), port)
 end

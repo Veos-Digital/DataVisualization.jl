@@ -2,6 +2,12 @@ struct Tabs{T}
     options::Vector{Option{T}}
 end
 
+function Tabs(nt::NamedTuple)
+    T = eltype(nt)
+    options = [Option{T}(string(key), val, true) for (key, val) in pairs(nt)]
+    return Tabs(options)
+end
+
 function jsrender(session::Session, tabs::Tabs)
     activetab = Observable(1)
     options = tabs.options

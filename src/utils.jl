@@ -2,6 +2,8 @@ colnames(table) = collect(map(String, Tables.columnnames(table)))
 
 vecmap(f, iter) = [f(el) for el in iter]
 
+mapkeys(f, names::Tuple) = NamedTuple{names}(map(f, names))
+
 function data_options(t::Observable; keywords=[""])
     return lift(t) do table
         names = colnames(table)

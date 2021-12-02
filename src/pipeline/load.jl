@@ -22,5 +22,5 @@ function jsrender(session::Session, l::Load)
         l.value[] = table
     end
 
-    return jsrender(session, with_tabular(ui, l.value))
+    return jsrender(session, ui)
 end

@@ -34,5 +34,5 @@ function jsrender(session::Session, f::Filter)
         f.value[] = selected_data(f)
     end
 
-    return jsrender(session, with_tabular(ui, f.value; padwidgets=0))
+    return jsrender(session, ui)
 end
