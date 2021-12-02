@@ -85,8 +85,6 @@ for sym in (:on, :onany)
     end
 end
 
-mapkeys(f, names::Tuple) = NamedTuple{names}(map(f, names))
-
 function filter_namedtuple(f, nt)
     names = filter(key -> f(nt[key]), keys(nt))
     return NamedTuple{names}(nt)

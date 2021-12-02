@@ -57,6 +57,7 @@ abstract type AbstractPipeline{T} end
 abstract type AbstractVisualization{T} end
 
 output(p::AbstractPipeline) = p.value
+output(p::AbstractVisualization) = nothing
 
 include("utils.jl")
 include("components/filepicker.jl")
