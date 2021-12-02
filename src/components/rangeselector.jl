@@ -1,16 +1,18 @@
 struct RangeSelector{T <: AbstractRange, ET}
     range::T
     selected::NTuple{2, Observable{ET}}
-    isoriginal::Observable{Bool}
 end
 
 function RangeSelector(range::AbstractRange)
     min, max = extrema(range)
     selected = map(Observable, (min, max))
-    isoriginal = map(selected...) do smin, smax
+    return RangeSelector(range, selected)
+end
+
+function isoriginal(rs::RangeSelector)
+    return lift(rs.selected...) do smin, smax
         return smin ≤ min && smax ≥ max
     end
-    return RangeSelector(range, selected, isoriginal)
 end
 
 function reset!(wdg::RangeSelector)

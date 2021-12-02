@@ -1,5 +1,5 @@
 struct Togglers
-    options::Vector{Option}
+    options::Dict{String, Vector}
 end
 
 function jsrender(session::Session, togglers::Togglers)

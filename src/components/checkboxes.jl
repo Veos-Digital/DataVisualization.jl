@@ -6,26 +6,18 @@ end
 
 Option(key::String, value, selected::Bool=true) = Option(key::String, value, Observable(selected))
 
-struct Checkboxes{T}
-    options::Vector{Option{T}}
-    isoriginal::Observable{Bool}
+# Pass `Dict("keys" => ..., "values" => ..., "selected" => ...)` as options
+struct Checkboxes
+    options::Dict{String, Vector}
 end
 
-function Checkboxes(options)
-    obs = (option.selected for option in options)
-    isoriginal = map((args...) -> all(args), obs...)
-    return Checkboxes(options, isoriginal)
-end
+isoriginal(cb::Checkboxes) = all(getindex, cb.options["selected"])
 
-function reset!(wdg::Checkboxes)
-    for option in wdg.options
-        option.selected[] = true
-    end
-end
+reset!(wdg::Checkboxes) = foreach(obs -> (obs[] = true), wdg.options["selected"])
 
 function jsrender(session::Session, wdg::Checkboxes)
-    list = map(wdg.options) do option
-        k, v, s = option.key, option.value, option.selected
+    options = wdg.options
+    list = map(options["keys"], options["values"], options["selected"]) do k, v, s
         update = js"JSServe.update_obs($s, this.checked)"
         return DOM.label(
             DOM.input(
