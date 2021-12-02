@@ -38,8 +38,14 @@ function UI(table; pipelinetabs=keys(PipelineTabs), visualizationtabs=keys(Visua
 end
 
 function jsrender(session::Session, ui::UI)
+    evaljs(session, js"document.body.classList.add('bg-gray-100');")
     pipelinetabs, visualizationtabs = Tabs(ui.pipelinetabs), Tabs(ui.visualizationtabs)
-    return jsrender(session, pipelinetabs)
+    gui = DOM.div(
+            class="grid grid-cols-3 h-full",
+            DOM.div(class="col-span-1 pr-16", pipelinetabs),
+            DOM.div(class="col-span-2 pl-16", visualizationtabs)
+        )
+    return jsrender(session, gui)
 end
 
 """

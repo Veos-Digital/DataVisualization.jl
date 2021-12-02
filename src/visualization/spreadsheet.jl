@@ -3,5 +3,6 @@ struct SpreadSheet{T} <: AbstractVisualization{T}
 end
 
 function jsrender(session::Session, sh::SpreadSheet)
-    return jsrender(session, Tabular(sh.table))
+    ui = Tabular(sh.table)
+    return jsrender(session, ui)
 end

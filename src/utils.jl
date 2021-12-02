@@ -2,8 +2,6 @@ colnames(table) = collect(map(String, Tables.columnnames(table)))
 
 vecmap(f, iter) = [f(el) for el in iter]
 
-mapkeys(f, names::Tuple) = NamedTuple{names}(map(f, names))
-
 function data_options(t::Observable; keywords=[""])
     return lift(t) do table
         names = colnames(table)
@@ -82,13 +80,7 @@ for sym in (:on, :onany)
     end
 end
 
-function with_tabular(widget, table; padwidgets=16, padtable=16)
-    return DOM.div(
-        class="grid grid-cols-3 h-full",
-        DOM.div(class="col-span-1 pr-$padwidgets", widget),
-        DOM.div(class="col-span-2 pl-$padtable", DOM.div(Tabular(table)))
-    )
-end
+mapkeys(f, names::Tuple) = NamedTuple{names}(map(f, names))
 
 function filter_namedtuple(f, nt)
     names = filter(key -> f(nt[key]), keys(nt))
