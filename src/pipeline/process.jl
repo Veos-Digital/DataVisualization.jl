@@ -52,7 +52,7 @@ function jsrender(session::Session, process::Process)
         process.list;
         onmousedown=js"$(UtilitiesJS).updateSelection(this, event, $(process.list.selected));"
     )
-    return jsrender(session, with_tabular(ui, process.value, padwidgets=0))
+    return jsrender(session, ui)
 end
 
 default_needs_update(step) = shouldrun(step.card.state[])

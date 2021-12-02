@@ -45,7 +45,7 @@ function jsrender(session::Session, tabular::Tabular)
                     sortable: true,
                     resizable: true,
                     headerClass: "text-blue-800 text-xl font-semibold px-4 hover:bg-gray-200",
-                    cellClass: "px-4 items-center flex",
+                    cellClass: "px-4 text-base",
                 },
                 columnDefs: columnDefs,
                 rowData: rowData,

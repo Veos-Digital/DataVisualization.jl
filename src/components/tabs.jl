@@ -2,6 +2,12 @@ struct Tabs{T}
     options::Vector{Option{T}}
 end
 
+function Tabs(nt::NamedTuple)
+    T = eltype(nt)
+    options = [Option{T}(string(key), val, true) for (key, val) in pairs(nt)]
+    return Tabs(options)
+end
+
 function jsrender(session::Session, tabs::Tabs)
     activetab = Observable(1)
     options = tabs.options
@@ -37,7 +43,7 @@ function jsrender(session::Session, tabs::Tabs)
         return jsrender(session, content)
     end
     return DOM.div(
-        class="flex flex-col h-screen p-8",
+        class="flex flex-col h-screen py-8",
         DOM.div(class="flex-initial", headers),
         DOM.div(class="flex-auto", contents...)
     )

@@ -54,6 +54,7 @@ const agGrid = JSServe.Dependency(
 )
 
 abstract type AbstractPipeline{T} end
+abstract type AbstractVisualization{T} end
 
 output(p::AbstractPipeline) = p.value
 
@@ -67,7 +68,6 @@ include("components/tabular.jl")
 include("components/optionlist.jl")
 include("components/autocomplete.jl")
 include("components/filters.jl")
-include("components/plotspecs.jl")
 include("components/editablelist.jl")
 include("components/processing_card.jl")
 include("pipeline/processes/linearmodel.jl")
@@ -76,7 +76,8 @@ include("pipeline/processes/dimensionalityreduction.jl")
 include("pipeline/load.jl")
 include("pipeline/filter.jl")
 include("pipeline/process.jl")
-include("pipeline/visualize.jl")
+include("visualization/chart.jl")
+include("visualization/spreadsheet.jl")
 include("app.jl")
 
 end

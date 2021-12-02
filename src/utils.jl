@@ -80,13 +80,7 @@ for sym in (:on, :onany)
     end
 end
 
-function with_tabular(widget, table; padwidgets=16, padtable=16)
-    return DOM.div(
-        class="grid grid-cols-3 h-full",
-        DOM.div(class="col-span-1 pr-$padwidgets", widget),
-        DOM.div(class="col-span-2 pl-$padtable", DOM.div(Tabular(table)))
-    )
-end
+mapkeys(f, names::Tuple) = NamedTuple{names}(map(f, names))
 
 function filter_namedtuple(f, nt)
     names = filter(key -> f(nt[key]), keys(nt))
@@ -118,7 +112,7 @@ end
 
 function scrollable_component(args...; kwargs...)
     return DOM.div(
-        DOM.div(args...; class="absolute left-0 right-16");
+        DOM.div(args...; class="absolute left-0 right-8");
         class="overflow-y-scroll h-full w-full relative",
         kwargs...
     )

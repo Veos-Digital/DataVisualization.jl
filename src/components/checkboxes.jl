@@ -4,6 +4,8 @@ struct Option{T}
     selected::Observable{Bool}
 end
 
+Option(key::String, value, selected::Bool=true) = Option(key::String, value, Observable(selected))
+
 struct Checkboxes{T}
     options::Vector{Option{T}}
     isoriginal::Observable{Bool}
