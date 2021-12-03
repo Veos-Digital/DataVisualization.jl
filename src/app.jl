@@ -1,5 +1,5 @@
 const PIPELINE_TABS = (; Load, Filter, Process)
-const VISUALIZATION_TABS = (; Spreadsheet, Chart)
+const VISUALIZATION_TABS = (; Spreadsheet, Chart, Pipelines)
 
 struct UI
     pipelinetabs::Dict{String, Vector}
@@ -17,13 +17,13 @@ function concatenate(tabs, names, value)
         push!(keys, string(name))
         tab = tabs[name](value)
         push!(values, tab)
-        value = something(output(tab), value)
+        value = output(tab)
     end
-    return Dict("keys" => keys, "values" => values), value
+    return Dict("keys" => keys, "values" => values)
 end
 
 """
-    UI(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:Spreadsheet, :Chart))
+    UI(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:Spreadsheet, :Chart, :Pipelines))
 
 Generate a `UI` with a given table as starting value. `pipelinetabs` denote the list of
 pipeline tabs to include in the user interface. Each tab can take one of the following types:
@@ -32,12 +32,16 @@ Repetitions are allowed, for example setting
 `tabs=(:Load, :Filter, :Process, :Filter)` would generate a `UI` that
 allowes filtering both before and after processing the data.
 `visualizationtabs` includes the list of visualization tabs to be included in the UI.
-Possible values are `:Spreadsheet` and `Chart`.
+Possible values are `:Spreadsheet`, `Chart` and `:Pipelines`.
 """
 function UI(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
     obs = Observable(to_littledict(table))
-    pipelines, value = concatenate(PIPELINE_TABS, pipelinetabs, obs)
-    visualizations, _ = concatenate(VISUALIZATION_TABS, visualizationtabs, value)
+    pipelines = concatenate(PIPELINE_TABS, pipelinetabs, obs)
+    visualizations = Dict{String, Vector}("keys" => String[], "values" => Any[])
+    for tab in visualizationtabs
+        push!(visualizations["keys"], string(tab))
+        push!(visualizations["values"], VISUALIZATION_TABS[tab](pipelines["values"]))
+    end
     return UI(pipelines, visualizations)
 end
 

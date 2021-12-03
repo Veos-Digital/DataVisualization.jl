@@ -14,6 +14,7 @@ using Makie.Colors
 using WGLMakie
 using AlgebraOfGraphics
 using AlgebraOfGraphics: density, Layers
+using LayeredLayouts, GraphMakie
 using StatsBase: histrange, fit
 using MultivariateStats: PCA,
                          PPCA,
@@ -57,7 +58,6 @@ abstract type AbstractPipeline{T} end
 abstract type AbstractVisualization{T} end
 
 output(p::AbstractPipeline) = p.value
-output(p::AbstractVisualization) = nothing
 
 include("utils.jl")
 include("components/filepicker.jl")
@@ -78,6 +78,7 @@ include("pipeline/load.jl")
 include("pipeline/filter.jl")
 include("pipeline/process.jl")
 include("visualization/chart.jl")
+include("visualization/pipelines.jl")
 include("visualization/spreadsheet.jl")
 include("app.jl")
 

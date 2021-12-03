@@ -58,9 +58,7 @@ end
 default_needs_update(step) = shouldrun(step.card.state[])
 always_true(step) = true
 
-nodes_to_compute(steps) = nodes_to_compute(default_needs_update, steps)
-
-function nodes_to_compute(f, steps)
+function simpledigraph(steps)
     columns_input = columns_in.(steps)
     columns_output = columns_out.(steps)
     N = length(steps)
@@ -70,6 +68,13 @@ function nodes_to_compute(f, steps)
             add_edge!(g, i, j)
         end
     end
+    return g
+end
+
+nodes_to_compute(steps) = nodes_to_compute(default_needs_update, steps)
+
+function nodes_to_compute(f, steps)
+    g = simpledigraph(steps)
     sorted = topological_sort_by_dfs(g)
     needs_updating = map(f, steps)
     nodes = Int[]

@@ -87,6 +87,7 @@ struct Chart{T} <: AbstractVisualization{T}
 end
 
 Chart(table::Observable{T}) where {T} = Chart{T}(table, PlotSpecs(table))
+Chart(pipelines::AbstractVector) = Chart(output(last(pipelines)))
 
 to_algebraic(chart::Chart) = data(chart.table[]) * to_algebraic(chart.plotspecs)
 
