@@ -26,30 +26,35 @@ function jsrender(session::Session, pipelines::Pipelines)
     un = collect(keys(PROCESSING_STEPS))
     uc = palette[eachindex(un)]
     scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Processing")
-    plot = map(session, pipelines.steps, result=Observable{Figure}()) do steps
-        g = simpledigraph(steps)
-        names = [step.card.name for step in steps]
-        node_color = AlgebraOfGraphics.rescale(names, scale)
-        f = Figure(; backgroundcolor=colorant"#F3F4F6")
-        ax = Axis(f[1, 1]; backgroundcolor=colorant"#F3F4F6")
-        isempty(steps) || graphplot!(ax, g;
-            arrow_show=true, arrow_size, 
-            edge_width, node_color,
-            nlabels=string.(eachindex(steps)),
-            nlabels_align=(:center, :center),
-            nlabels_attr=(; font, textsize, color=:white),
-            node_size, layout
-        )
-        hidedecorations!(ax)
-        hidespines!(ax)
-        # TODO: incorporate graphplots in AlgebraOfGraphics
-        Legend(
-            f[1, 2],
-            [MarkerElement(; color, marker=:circle, markersize=legend_node_size) for color in scale.plot],
-            string.(scale.data), scale.label
-        )
-        colgap!(f.layout, colgap)
-        return f
+
+    # FIXME: remove hack and add data node in black
+    # FIXME: use `map(f, session, obs)` method instead
+    steps = lift(pipelines.steps) do _steps
+        fake = Observable(to_littledict((a=rand(10),)))
+        vcat(Cluster(fake), _steps)
     end
-    return jsrender(session, scrollable_component(plot))
+    g = lift(simpledigraph, steps)
+    names = lift(steps -> [step.card.name for step in steps], steps)
+    node_color = lift(names -> AlgebraOfGraphics.rescale(names, scale), names)
+    # nlabels = lift(steps -> string.(eachindex(steps)), steps)
+    fig = Figure(; backgroundcolor=colorant"#F3F4F6")
+    ax = Axis(fig[1, 1])
+    # FIXME: should also update when values of cards change, maybe use output for this?
+    # In retrospect, maybe only update on value
+    graphplot!(ax, g;
+        arrow_show=true, arrow_size, 
+        edge_width, node_color,
+        # nlabels, nlabels_align=(:center, :center), FIXME: support interactivity here
+        nlabels_attr=(; font, textsize, color=:white),
+        node_size, layout
+    )
+    hidedecorations!(ax)
+    hidespines!(ax)
+    Legend(
+        fig[1, 2],
+        [MarkerElement(; color, marker=:circle, markersize=legend_node_size) for color in scale.plot],
+        string.(scale.data), scale.label
+    )
+    colgap!(fig.layout, colgap)
+    return jsrender(session, scrollable_component(fig))
 end
