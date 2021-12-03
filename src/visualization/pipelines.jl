@@ -9,33 +9,47 @@ end
 
 function layout(g::SimpleDiGraph)
     xs, ys, _ = solve_positions(Zarate(), g)
-    return Point.(-ys, -xs)
+    return Point.(ys, -xs)
 end
 
 function jsrender(session::Session, pipelines::Pipelines)
-    plot = Observable{Figure}(defaultplot())
-    font = AlgebraOfGraphics.firasans("Light")
+    # FIXME: set elsewhere
+    font = AlgebraOfGraphics.firasans("Medium")
+    textsize = 28
     arrow_size = 25
-    edge_size = 3
+    edge_width = 3
     node_size = 45
-    on(session, pipelines.steps) do steps
+    legend_node_size = 20
+    colgap = 150
+    # set general legend
+    palette = Makie.current_default_theme().palette.color[]
+    un = collect(keys(PROCESSING_STEPS))
+    uc = palette[eachindex(un)]
+    scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Processing")
+    plot = map(session, pipelines.steps, result=Observable{Figure}()) do steps
         g = simpledigraph(steps)
-        names = [string(step.card.name) for step in steps]
-        palette = Makie.current_default_theme().palette.color[]
-        # TODO: move scale outside to keep consistency
-        scale = AlgebraOfGraphics.CategoricalScale(unique(names), palette, palette, nothing)
-        colors = AlgebraOfGraphics.rescale(names, scale)
-        f, ax, _ = graphplot(
-            g, arrow_show=true, 
-            arrow_size=arrow_size, edge_width=edge_size, node_color=colors,
-            nlabels=names,
+        names = [step.card.name for step in steps]
+        node_color = AlgebraOfGraphics.rescale(names, scale)
+        f = Figure(; backgroundcolor=colorant"#F3F4F6")
+        ax = Axis(f[1, 1]; backgroundcolor=colorant"#F3F4F6")
+        isempty(steps) || graphplot!(ax, g;
+            arrow_show=true, arrow_size, 
+            edge_width, node_color,
+            nlabels=string.(eachindex(steps)),
             nlabels_align=(:center, :center),
-            nlabels_attr=(; font, textsize=16f0),
-            node_size=node_size, layout=layout
+            nlabels_attr=(; font, textsize, color=:white),
+            node_size, layout
         )
         hidedecorations!(ax)
         hidespines!(ax)
-        plot[] = f
+        # TODO: incorporate graphplots in AlgebraOfGraphics
+        Legend(
+            f[1, 2],
+            [MarkerElement(; color, marker=:circle, markersize=legend_node_size) for color in scale.plot],
+            string.(scale.data), scale.label
+        )
+        colgap!(f.layout, colgap)
+        return f
     end
-    return jsrender(session, DOM.div(plot))
+    return jsrender(session, scrollable_component(plot))
 end

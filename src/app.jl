@@ -51,7 +51,7 @@ function jsrender(session::Session, ui::UI)
     layout = DOM.div(
             class="grid grid-cols-3 h-full",
             DOM.div(class="col-span-1 pl-8", pipelinetabs),
-            DOM.div(class="col-span-2 pl-12 pr-16", visualizationtabs)
+            DOM.div(class="col-span-2 pl-12 pr-8", visualizationtabs)
         )
     return jsrender(session, layout)
 end

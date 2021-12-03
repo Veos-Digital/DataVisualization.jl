@@ -93,6 +93,12 @@ to_algebraic(chart::Chart) = data(chart.table[]) * to_algebraic(chart.plotspecs)
 
 defaultplot() = Figure(; backgroundcolor=colorant"#F3F4F6")
 
+function get_pixelratio(session)
+    pixelratio = Observable(1.0)
+    evaljs(session, js"$(UtilitiesJS).trackPixelRatio($(pixelratio))")
+    return pixelratio
+end
+
 function jsrender(session::Session, chart::Chart)
 
     specs_widgets = map([:attributes, :layers]) do name
@@ -107,8 +113,7 @@ function jsrender(session::Session, chart::Chart)
 
     plot = Observable{Figure}(defaultplot())
 
-    pixelratio = Observable(1.0)
-    evaljs(session, js"$(UtilitiesJS).trackPixelRatio($(pixelratio))")
+    pixelratio = get_pixelratio(session)
 
     reset_plot!(_) = plot[] = defaultplot()
     function update_plot!(_)
@@ -122,7 +127,7 @@ function jsrender(session::Session, chart::Chart)
 
     plot_button = Button("Plot", class=buttonclass(true))
     clear_button = Button("Clear", class=buttonclass(false))
-    ui = DOM.div(
+    ui = scrollable_component(
         DOM.div(class="grid grid-cols-2 gap-8", specs_widgets),
         DOM.div(class="mt-8 pl-4", plot_button, clear_button),
         DOM.div(class="mt-12 pl-4", plot)
