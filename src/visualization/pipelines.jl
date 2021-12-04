@@ -22,7 +22,6 @@ function jsrender(session::Session, pipelines::Pipelines)
     uc = palette[eachindex(un)]
     scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Step")
 
-    # FIXME: remove hack and add data node in black
     # FIXME: use `map(f, session, obs)` method instead
     table = input(first(pipelines.pipelines))
     value = output(last(pipelines.pipelines))
@@ -40,9 +39,24 @@ function jsrender(session::Session, pipelines::Pipelines)
     node_color = @lift AlgebraOfGraphics.rescale($names, scale)
     # nlabels = @lift string.(eachindex($vertices))
     fig = Figure(; backgroundcolor=colorant"#F3F4F6")
-    ax = Axis(fig[1, 1])
-    # FIXME: should also update when values of cards change, maybe use output for this?
-    # In retrospect, maybe only update on value
+    # FIXME: figure out cleanest way to set a reasonable size
+    pixelratio = get_pixelratio(session)
+    sz = @lift(round(Int, 500 * $pixelratio))
+    on(sz) do sz
+        sx, sy = round(Int, sz * 1.5), round(Int, sz * 1.2)
+        resize!(fig.scene, (sx, sy))
+    end
+
+    ax = Axis(fig[1, 1], width=sz, height=sz)
+    # FIXME: pass observable directly
+    on(g) do graph
+        points = layout(graph)
+        xlims = extrema(first, points)
+        ylims = extrema(last, points)
+        xlims!(ax, xlims[1] - 0.5,  xlims[2] + 0.5)
+        ylims!(ax, ylims[1] - 0.5,  ylims[2] + 0.5)
+    end
+    notify!(g)
     graphplot!(ax, g;
         arrow_show=true, arrow_size, 
         edge_width, node_color,
@@ -52,6 +66,7 @@ function jsrender(session::Session, pipelines::Pipelines)
     )
     hidedecorations!(ax)
     hidespines!(ax)
+
     Legend(
         fig[1, 2],
         [MarkerElement(; color, marker=:circle, markersize=legend_node_size) for color in scale.plot],
