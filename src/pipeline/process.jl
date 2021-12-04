@@ -58,23 +58,12 @@ end
 default_needs_update(step) = shouldrun(step.card.state[])
 always_true(step) = true
 
-function simpledigraph(steps)
-    columns_input = columns_in.(steps)
-    columns_output = columns_out.(steps)
-    N = length(steps)
-    g = SimpleDiGraph(N)
-    for i in 1:N, j in 1:N
-        if !isdisjoint(columns_input[j], columns_output[i])
-            add_edge!(g, i, j)
-        end
-    end
-    return g
-end
+Vertex(step::AbstractProcessingStep) = Vertex(step.card.name, columns_in(step), columns_out(step))
 
 nodes_to_compute(steps) = nodes_to_compute(default_needs_update, steps)
 
 function nodes_to_compute(f, steps)
-    g = simpledigraph(steps)
+    g = simpledigraph(Vertex.(steps))
     sorted = topological_sort_by_dfs(g)
     needs_updating = map(f, steps)
     nodes = Int[]

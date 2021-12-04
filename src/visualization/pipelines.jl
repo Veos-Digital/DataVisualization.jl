@@ -14,29 +14,26 @@ end
 
 function jsrender(session::Session, pipelines::Pipelines)
     # FIXME: set elsewhere
-    font = AlgebraOfGraphics.firasans("Medium")
-    textsize = 28
+    # font = AlgebraOfGraphics.firasans("Medium")
+    # textsize = 28
     arrow_size = 25
     edge_width = 3
     node_size = 45
     legend_node_size = 20
     colgap = 150
     # set general legend
-    palette = Makie.current_default_theme().palette.color[]
-    un = collect(keys(PROCESSING_STEPS))
+    palette = vcat(RGB(colorant"black"), Makie.current_default_theme().palette.color[])
+    un = vcat(:Data, collect(keys(PROCESSING_STEPS)))
     uc = palette[eachindex(un)]
-    scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Processing")
+    scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Step")
 
     # FIXME: remove hack and add data node in black
     # FIXME: use `map(f, session, obs)` method instead
-    steps = lift(pipelines.steps) do _steps
-        fake = Observable(to_littledict((a=rand(10),)))
-        vcat(Cluster(fake), _steps)
-    end
-    g = lift(simpledigraph, steps)
-    names = lift(steps -> [step.card.name for step in steps], steps)
-    node_color = lift(names -> AlgebraOfGraphics.rescale(names, scale), names)
-    # nlabels = lift(steps -> string.(eachindex(steps)), steps)
+    vertices = @lift vcat(Vertex(:Data, Symbol[], Symbol[]), Vertex.($(pipelines.steps)))
+    g = @lift simpledigraph($vertices)
+    names = @lift map(vertex -> vertex.name, $vertices)
+    node_color = @lift AlgebraOfGraphics.rescale($names, scale)
+    # nlabels = @lift string.(eachindex($vertices))
     fig = Figure(; backgroundcolor=colorant"#F3F4F6")
     ax = Axis(fig[1, 1])
     # FIXME: should also update when values of cards change, maybe use output for this?
@@ -45,7 +42,7 @@ function jsrender(session::Session, pipelines::Pipelines)
         arrow_show=true, arrow_size, 
         edge_width, node_color,
         # nlabels, nlabels_align=(:center, :center), FIXME: support interactivity here
-        nlabels_attr=(; font, textsize, color=:white),
+        # nlabels_attr=(; font, textsize, color=:white),
         node_size, layout
     )
     hidedecorations!(ax)
