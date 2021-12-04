@@ -1,10 +1,5 @@
 struct Pipelines
-    steps::Observable{Vector{Any}}
-end
-
-function Pipelines(pipelines::AbstractVector)
-    steps = lift(vcat, (x.list.steps for x in pipelines if x isa Process)...)
-    return Pipelines(steps)
+    pipelines::AbstractVector
 end
 
 function layout(g::SimpleDiGraph)
@@ -29,7 +24,17 @@ function jsrender(session::Session, pipelines::Pipelines)
 
     # FIXME: remove hack and add data node in black
     # FIXME: use `map(f, session, obs)` method instead
-    vertices = @lift vcat(Vertex(:Data, Symbol[], Symbol[]), Vertex.($(pipelines.steps)))
+    table = input(first(pipelines.pipelines))
+    value = output(last(pipelines.pipelines))
+    # FIXME: consider adding filtering as well
+    vertices = lift(value) do _
+        # Do properly, every tab has it's own list of vertices
+        steps = vcat((x.list.steps[] for x in pipelines.pipelines if x isa Process)...)
+        return vcat(
+            Vertex(:Data, Symbol[], collect(Tables.columnnames(table[]))),
+            Vertex.(steps)
+        )
+    end
     g = @lift simpledigraph($vertices)
     names = @lift map(vertex -> vertex.name, $vertices)
     node_color = @lift AlgebraOfGraphics.rescale($names, scale)
