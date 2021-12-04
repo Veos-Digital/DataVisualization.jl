@@ -93,10 +93,16 @@ to_algebraic(chart::Chart) = data(chart.table[]) * to_algebraic(chart.plotspecs)
 
 defaultplot() = Figure(; backgroundcolor=colorant"#F3F4F6")
 
-function get_pixelratio(session)
+function on_pixelratio(f, session; once=false)
     pixelratio = Observable(1.0)
+    flag = false
+    on(pixelratio) do pr
+        once && flag && return
+        f(pr)
+        flag = true
+    end
     evaljs(session, js"$(UtilitiesJS).trackPixelRatio($(pixelratio))")
-    return pixelratio
+    return
 end
 
 function jsrender(session::Session, chart::Chart)
@@ -113,14 +119,17 @@ function jsrender(session::Session, chart::Chart)
 
     plot = Observable{Figure}(defaultplot())
 
-    pixelratio = get_pixelratio(session)
+    width, height = Observable(350), Observable(350)
+    on_pixelratio(session) do pr
+        width[] = round(Int, 350pr)
+        height[] = round(Int, 350pr)
+    end
 
     reset_plot!(_) = plot[] = defaultplot()
     function update_plot!(_)
         is_set(chart.plotspecs) || return
         plt = to_algebraic(chart)
-        pr = pixelratio[]
-        axis = (width=round(Int, 350pr), height=round(Int, 350pr))
+        axis = (width=width[], height=height[])
         fg = draw(plt; axis)
         plot[] = fg.figure
     end

@@ -32,7 +32,10 @@ function simpledigraph(nested_vertices::AbstractArray{<:AbstractArray{Vertex}})
         for i in ii:-1:1
             outputs = vertices[i].outputs
             isdisjoint(outputs, inputs) && continue
-            i == j && continue # FIXME: is there a cleaner way to avoid self loops with filter?
+            # FIXME: is there a cleaner way to avoid self loops with filter?
+            # One possibility is to add a "isdestructive" field, when the output
+            # overwrites the input 
+            i == j && continue
             setdiff!(inputs, outputs)
             add_edge!(g, i, j)
         end
