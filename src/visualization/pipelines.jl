@@ -18,26 +18,19 @@ function jsrender(session::Session, pipelines::Pipelines)
     colgap = 150
     # set general legend
     palette = vcat(RGB(colorant"black"), Makie.current_default_theme().palette.color[])
-    un = vcat(:Data, collect(keys(PROCESSING_STEPS)))
+    un = reduce(vcat, get_vertex_names.(pipelines.pipelines))
     uc = palette[eachindex(un)]
     scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Step")
 
-    # FIXME: use `map(f, session, obs)` method instead
-    table = input(first(pipelines.pipelines))
-    value = output(last(pipelines.pipelines))
     # FIXME: consider adding filtering as well
-    vertices = lift(value) do _
-        # Do properly, every tab has it's own list of vertices
-        steps = vcat((x.list.steps[] for x in pipelines.pipelines if x isa Process)...)
-        return vcat(
-            Vertex(:Data, Symbol[], collect(Tables.columnnames(table[]))),
-            Vertex.(steps)
-        )
+    nested_vertices = lift(output(last(pipelines.pipelines))) do _
+        return get_vertices.(pipelines.pipelines)
     end
-    g = @lift simpledigraph($vertices)
-    names = @lift map(vertex -> vertex.name, $vertices)
+    g = @lift simpledigraph($nested_vertices)
+
+    names = @lift mapreduce(get_vertex_names, append!, $nested_vertices)
     node_color = @lift AlgebraOfGraphics.rescale($names, scale)
-    # nlabels = @lift string.(eachindex($vertices))
+    # nlabels = @lift string.(eachindex($names))
     fig = Figure(; backgroundcolor=colorant"#F3F4F6")
     # FIXME: figure out cleanest way to set a reasonable size
     pixelratio = get_pixelratio(session)

@@ -4,6 +4,20 @@ struct Filter{T} <: AbstractPipeline{T}
     value::Observable{T}
 end
 
+function get_vertices(f::Filter)
+    isoriginal = all(f.filters[].options) do option
+        return option.value.isoriginal[]
+    end
+    if isoriginal
+        return Vertex[]
+    else
+        names = collect(Tables.columnnames(f.table[]))
+        return [Vertex(:Filter, names, names)]
+    end
+end
+
+get_vertex_names(f::Filter) = [:Filter]
+
 function Filter(table::Observable{T}) where {T}
     filters = Observable(Filters(table[]))
     value = Observable{T}(selected_data(filters[], table[]))

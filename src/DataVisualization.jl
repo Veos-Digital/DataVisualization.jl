@@ -58,7 +58,6 @@ abstract type AbstractPipeline{T} end
 abstract type AbstractVisualization{T} end
 
 output(p::AbstractPipeline) = p.value
-input(p::AbstractPipeline) = p.table
 
 include("utils.jl")
 include("vertices.jl")

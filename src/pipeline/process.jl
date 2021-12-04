@@ -10,6 +10,9 @@ struct Process{T} <: AbstractPipeline{T}
     value::Observable{T}
 end
 
+get_vertices(p::Process) = Vertex.(p.list.steps[])
+get_vertex_names(p::Process) = collect(keys(PROCESSING_STEPS))
+
 function Process(table::Observable{T}) where {T}
     value = Observable(table[])
     steps = Observable(Any[])
