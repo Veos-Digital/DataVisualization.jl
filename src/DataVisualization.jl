@@ -37,7 +37,7 @@ export set_aog_theme!, update_theme!
 WGLMakie.activate!()
 
 const dependency_folder = @path joinpath(dirname(@__DIR__), "js_dependencies")
-const dependency_path(fn) = joinpath(dependency_folder, fn)
+dependency_path(fn) = joinpath(dependency_folder, fn)
 
 const FormsCSS = JSServe.Asset(dependency_path("forms.min.css"))
 const TailwindCSS = JSServe.Asset(dependency_path("tailwind.min.css"))
