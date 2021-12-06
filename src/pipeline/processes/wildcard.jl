@@ -6,7 +6,7 @@ end
 function Wildcard(table::Observable)
     wdgs = (
         inputs=RichTextField("Inputs", data_options(table, keywords=[""]), ""),
-        outputs=RichTextField("Outputs", data_options(table, keywords=[""]), ""),
+        outputs=RichTextField("Outputs", data_options(table, keywords=[""], suffix="_new"), ""),
         method=RichEditor("Method", "julia", ""), # FIXME: pass correct list of options
     )
     card = ProcessingCard(:Wildcard; wdgs...)
@@ -14,9 +14,10 @@ function Wildcard(table::Observable)
 end
 
 function (wc::Wildcard)(data)
+    card = wc.card
     inputs_call = only(card.inputs.parsed)
     inputs = Symbol.(inputs_call.positional)
-    outputs_call = only(card.inputs.parsed)
+    outputs_call = only(card.outputs.parsed)
     outputs = Symbol.(outputs_call.positional)
     
     private_module = Module()

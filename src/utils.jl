@@ -2,9 +2,9 @@ colnames(table) = collect(map(String, Tables.columnnames(table)))
 
 vecmap(f, iter) = [f(el) for el in iter]
 
-function data_options(t::Observable; keywords=[""])
+function data_options(t::Observable; keywords=[""], suffix="")
     return lift(t) do table
-        names = colnames(table)
+        names = map(name -> name * suffix, colnames(table))
         return [keyword => names for keyword in keywords]
     end
 end

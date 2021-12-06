@@ -29,7 +29,7 @@ function jsrender(session::Session, editor::Editor)
             });
             editor.setOptions({
                 enableLiveAutocompletion: true,
-                fontSize: 24,
+                fontSize: 18,
             });
             editor.renderer.setShowGutter(false);
             editor.setShowPrintMargin(false);
