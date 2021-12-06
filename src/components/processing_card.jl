@@ -53,7 +53,7 @@ struct ProcessingCard
     name::Symbol
     inputs::RichTextField
     target::Union{RichTextField, Nothing}
-    method::Union{RichTextField, Editor}
+    method::Union{RichTextField, RichEditor}
     outputs::RichTextField
     process_button::Button
     clear_button::Button
@@ -66,7 +66,7 @@ end
 
 function autocompletes(card::ProcessingCard)
     textfields = (card.inputs, card.target, card.method, card.outputs)
-    return filter(textfield -> textfield isa RichTextField, textfields)
+    return filter(!isnothing, textfields)
 end
 
 function process!(card::ProcessingCard)

@@ -2,6 +2,7 @@ const PROCESSING_STEPS = (
     Predict = LinearModel,
     Cluster = Cluster,
     Project = DimensionalityReduction,
+    Wildcard = Wildcard,
 )
 
 struct Process{T} <: AbstractPipeline{T}

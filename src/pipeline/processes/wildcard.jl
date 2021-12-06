@@ -1,11 +1,11 @@
-struct WildCard{T} <: AbstractProcessingStep{T}
+struct Wildcard{T} <: AbstractProcessingStep{T}
     table::Observable{T}
     card::ProcessingCard
 end
 
-# WildCard(table::Observable) = WildCard(table, Observable(""))
+# Wildcard(table::Observable) = Wildcard(table, Observable(""))
 
-# function WildCard(table::Observable{T}) where T
+# function Wildcard(table::Observable{T}) where T
 #     source = Observable{String}("")
 #     value = map(table, source) do table, source
 #         private_module = Module()
@@ -17,15 +17,15 @@ end
 #         output::T = to_littledict(private_module.output)
 #         return output
 #     end
-#     return WildCard(table, source)
+#     return Wildcard(table, source)
 # end
 
-function jsrender(session::Session, wc::WildCard)
-    editor = Editor(
-        wc.source,
-        Observable("julia"),
-        Observable("cobalt"),
-        Observable(Dict{String, Any}("width" => "100%", "height" => "500px"))
+function Wildcard(table::Observable)
+    wdgs = (
+        inputs=RichTextField("Inputs", data_options(table, keywords=[""]), ""),
+        method=RichEditor("Method", "julia", ""),
+        outputs=RichTextField("Outputs", data_options(table, keywords=[""]), "")
     )
-    jsrender(session, editor)
+    card = ProcessingCard(:Project; wdgs...)
+    return DimensionalityReduction(table, card)
 end

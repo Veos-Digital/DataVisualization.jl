@@ -1,9 +1,14 @@
 # adapted from https://github.com/SimonDanisch/JSServe.jl/blob/master/examples/editor.jl
 struct Editor
     source::Observable{String}
-    theme::Observable{String}
     language::Observable{String}
     style::Observable{Dict{String, Any}}
+end
+
+function Editor(source::Observable, language′)
+    language::Observable{String} = language′
+    style = Observable(Dict{String, Any}("width" => "100%", "height" => "500px"))
+    return Editor(source, language, style)
 end
 
 function jsrender(session::Session, editor::Editor)
@@ -27,10 +32,8 @@ function jsrender(session::Session, editor::Editor)
     # }
     # editor.completers = [staticWordCompleter]
     # editor.commands.byName.startAutocomplete.exec(editor)
-    # editor.renderer.setShowGutter(false);
-    # editor.setShowPrintMargin(false);
+
     # editor.session.setMode("ace/mode/" + $(editor.language[]));
-    # editor.setTheme("ace/theme/" + $(editor.language[]));
 
     onload(session, ui, js"""
         function (element){
@@ -46,6 +49,8 @@ function jsrender(session::Session, editor::Editor)
                 enableLiveAutocompletion: true,
                 fontSize: 18,
             });
+            editor.renderer.setShowGutter(false);
+            editor.setShowPrintMargin(false);
 
             const style = $(editor.style[])
             for (let [key, value] of Object.entries(style)) {
@@ -54,5 +59,34 @@ function jsrender(session::Session, editor::Editor)
             editor.resize();
         }
     """)
+    return jsrender(session, ui)
+end
+
+struct RichEditor
+    name::String
+    widget::Editor
+    default::String
+    confirmedvalue::Observable{String}
+end
+
+function RichEditor(name, language, default)
+    wdg = Editor(Observable(default), language)
+    return RichEditor(name, wdg, default, Observable(default))
+end
+
+function parse!(rtf::RichEditor)
+    value = rtf.widget.value[]
+    rtf.confirmedvalue[] = value
+    return
+end
+
+function reset!(rtf::RichEditor)
+    rtf.widget.value[] = rtf.default
+    parse!(rtf)
+end
+
+function jsrender(session::Session, rtf::RichEditor)
+    label = DOM.p(class="text-blue-800 text-xl font-semibold py-4 w-full text-left", rtf.name)
+    ui = DOM.div(class="mb-4", label, rtf.widget)
     return jsrender(session, ui)
 end
