@@ -3,11 +3,26 @@ struct Wildcard{T} <: AbstractProcessingStep{T}
     card::ProcessingCard
 end
 
+function tryarguments(value::AbstractString)
+    result = String[]
+    try
+        result = only(compute_calls(value)).positional
+    catch e
+    end
+    return result
+end
+
 function Wildcard(table::Observable)
-    wdgs = (
-        inputs=RichTextField("Inputs", data_options(table, keywords=[""]), ""),
-        outputs=RichTextField("Outputs", data_options(table, keywords=[""], suffix="_new"), ""),
-        method=RichEditor("Method", "julia", ""), # FIXME: pass correct list of options
+    inputs = RichTextField("Inputs", data_options(table, keywords=[""]), "")
+    outputs = RichTextField("Outputs", data_options(table, keywords=[""], suffix="_new"), "")
+    options = lift(inputs.widget.value, outputs.widget.value) do inputs, outputs
+        input_options, output_options = tryarguments(inputs), tryarguments(outputs)
+        return vcat(input_options, output_options)
+    end
+    wdgs = (;
+        inputs,
+        outputs,
+        method=RichEditor("Method", "julia", "", options), # FIXME: pass correct list of options
     )
     card = ProcessingCard(:Wildcard; wdgs...)
     return Wildcard(table, card)
