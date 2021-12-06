@@ -4,6 +4,13 @@ struct Load{T} <: AbstractPipeline{T}
     value::Observable{T}
 end
 
+function get_vertices(l::Load)
+    names = collect(Tables.columnnames(l.table[]))
+    return [Vertex(:Load, Symbol[], names)]
+end
+
+get_vertex_names(l::Load) = [:Load]
+
 function Load(table::Observable{T}) where {T}
     files = Observable{Union{Nothing, Dict}}(nothing)
     value = Observable{T}(table[])

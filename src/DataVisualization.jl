@@ -14,6 +14,7 @@ using Makie.Colors
 using WGLMakie
 using AlgebraOfGraphics
 using AlgebraOfGraphics: density, Layers
+using LayeredLayouts, GraphMakie
 using StatsBase: histrange, fit
 using MultivariateStats: PCA,
                          PPCA,
@@ -22,7 +23,7 @@ using MultivariateStats: PCA,
                          classical_mds,
                          transform
 using OrderedCollections
-using Graphs: SimpleDiGraph, add_edge!, inneighbors, topological_sort_by_dfs
+using Graphs: SimpleDiGraph, add_edge!, inneighbors, ne, topological_sort_by_dfs
 using Distances: Euclidean, pairwise
 using Clustering
 using GLM, StatsModels
@@ -57,9 +58,9 @@ abstract type AbstractPipeline{T} end
 abstract type AbstractVisualization{T} end
 
 output(p::AbstractPipeline) = p.value
-output(p::AbstractVisualization) = nothing
 
 include("utils.jl")
+include("vertices.jl")
 include("components/filepicker.jl")
 include("components/checkboxes.jl")
 include("components/rangeselector.jl")
@@ -78,6 +79,7 @@ include("pipeline/load.jl")
 include("pipeline/filter.jl")
 include("pipeline/process.jl")
 include("visualization/chart.jl")
+include("visualization/pipelines.jl")
 include("visualization/spreadsheet.jl")
 include("app.jl")
 
