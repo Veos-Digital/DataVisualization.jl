@@ -53,8 +53,8 @@ struct ProcessingCard
     name::Symbol
     inputs::RichTextField
     target::Union{RichTextField, Nothing}
-    method::Union{RichTextField, RichEditor}
     outputs::RichTextField
+    method::Union{RichTextField, RichEditor}
     process_button::Button
     clear_button::Button
     state::Observable{State}
@@ -65,7 +65,7 @@ struct ProcessingCard
 end
 
 function autocompletes(card::ProcessingCard)
-    textfields = (card.inputs, card.target, card.method, card.outputs)
+    textfields = (card.inputs, card.target, card.outputs, card.method)
     return filter(!isnothing, textfields)
 end
 
@@ -84,8 +84,8 @@ end
 function ProcessingCard(name;
                         inputs,
                         target=nothing,
-                        method,
                         outputs,
+                        method,
                         process_button=Button("Process", class=buttonclass(true)),
                         clear_button=Button("Clear", class=buttonclass(false)),
                         state=Observable(inactive),
@@ -98,8 +98,8 @@ function ProcessingCard(name;
         name,
         inputs,
         target,
-        method,
         outputs,
+        method,
         process_button,
         clear_button,
         state,

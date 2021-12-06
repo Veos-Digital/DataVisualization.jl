@@ -1,62 +1,51 @@
 # adapted from https://github.com/SimonDanisch/JSServe.jl/blob/master/examples/editor.jl
 struct Editor
-    source::Observable{String}
+    value::Observable{String}
     language::Observable{String}
-    style::Observable{Dict{String, Any}}
+    options::Observable{Vector{String}}
+    style::Observable{String}
 end
 
-function Editor(source::Observable, language′)
+function Editor(value::Observable, language′, options=Observable(String[]))
     language::Observable{String} = language′
-    style = Observable(Dict{String, Any}("width" => "100%", "height" => "500px"))
-    return Editor(source, language, style)
+    style = Observable("width: 100%; height: 16rem;")
+    return Editor(value, language, options, style)
 end
 
 function jsrender(session::Session, editor::Editor)
-    # FIXME: currently, it does not update when changing observables
-    ui = DOM.div(editor.source[])
+    # FIXME: currently, not everything updates when changing observables
+    ui = DOM.div(editor.value[]; editor.style)
 
-    # const staticWordCompleter = {
-    #     getCompletions: function(editor, session, pos, prefix, callback) {
-    #         const wordList = [":", "color:", "foo", "bar", "baz"];
-    #         callback(null, wordList.map(function(word) {
-    #             const line = session.getLine(pos.row); 
-    #             console.log(line[pos.column-1]);
-    #             console.log(prefix);
-    #             return {
-    #                 caption: word,
-    #                 value: word,
-    #             };
-    #         }));
-
-    #     }
-    # }
-    # editor.completers = [staticWordCompleter]
-    # editor.commands.byName.startAutocomplete.exec(editor)
-
+    # FIXME: download correct file and set language
     # editor.session.setMode("ace/mode/" + $(editor.language[]));
 
     onload(session, ui, js"""
         function (element){
-            const langTools = $ace.require("ace/ext/language_tools");
-            const editor = $ace.edit(element);
+            const editor = $(ace).edit(element);
+            const langTools = $(ace).require("ace/ext/language_tools");
             editor.session.on("change", function () {
                 const value = editor.getValue();
-                JSServe.update_obs($(editor.source), value);
+                JSServe.update_obs($(editor.value), value);
             });
             editor.setOptions({
-                autoScrollEditorIntoView: true,
-                copyWithEmptySelection: true,
                 enableLiveAutocompletion: true,
-                fontSize: 18,
+                fontSize: 24,
             });
             editor.renderer.setShowGutter(false);
             editor.setShowPrintMargin(false);
-
-            const style = $(editor.style[])
-            for (let [key, value] of Object.entries(style)) {
-                $(ui).style[key] = value;
-            }
-            editor.resize();
+            const staticWordCompleter = {
+                getCompletions: function(editor, session, pos, prefix, callback) {
+                    const wordList = JSServe.get_observable($(editor.options));
+                    callback(null, wordList.map(function(word) {
+                        const line = session.getLine(pos.row); 
+                        return {
+                            caption: word,
+                            value: word,
+                        };
+                    }));
+                }
+            };
+            editor.completers = [staticWordCompleter];
         }
     """)
     return jsrender(session, ui)
@@ -69,8 +58,8 @@ struct RichEditor
     confirmedvalue::Observable{String}
 end
 
-function RichEditor(name, language, default)
-    wdg = Editor(Observable(default), language)
+function RichEditor(name, language, default, options::Observable{Vector{String}}=Observable(String[]))
+    wdg = Editor(Observable(default), language, options)
     return RichEditor(name, wdg, default, Observable(default))
 end
 

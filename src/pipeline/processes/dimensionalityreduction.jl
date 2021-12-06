@@ -64,8 +64,8 @@ function DimensionalityReduction(table::Observable)
 
     wdgs = (
         inputs=RichTextField("Inputs", data_options(table, keywords=[""]), ""),
+        outputs=RichTextField("Outputs", ["" => ["projection"]], default_names),
         method=RichTextField("Method", analysis_options, ""),
-        outputs=RichTextField("Outputs", ["" => ["projection"]], default_names)
     )
 
     card = ProcessingCard(:Project; wdgs...)

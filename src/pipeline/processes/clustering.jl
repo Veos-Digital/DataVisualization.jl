@@ -25,8 +25,8 @@ function Cluster(table::Observable{T}) where {T}
 
     wdgs = (
         inputs=RichTextField("Inputs", data_options(table, keywords=["", "weights"]), ""),
+        outputs=RichTextField("Outputs", ["" => ["cluster"]], default_names),
         method=RichTextField("Method", analysis_options, ""),
-        outputs=RichTextField("Outputs", ["" => ["cluster"]], default_names)
     )
 
     card = ProcessingCard(:Cluster; wdgs...)

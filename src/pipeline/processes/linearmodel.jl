@@ -44,8 +44,8 @@ function LinearModel(table::Observable)
     wdgs = (
         inputs=RichTextField("Inputs", data_options(table, keywords=["+ ", "* "]), ""),
         target=RichTextField("Target", data_options(table, keywords=[""]), ""),
+        outputs=RichTextField("Outputs", ["" => ["prediction", "error"]], default_names),
         method=RichTextField("Method", method_options, ""),
-        outputs=RichTextField("Outputs", ["" => ["prediction", "error"]], default_names)
     )
 
     card = ProcessingCard(:Predict; wdgs...)

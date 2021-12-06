@@ -47,6 +47,10 @@ end
 
 function jsrender(session::Session, ui::UI)
     evaljs(session, js"document.body.classList.add('bg-gray-100');")
+    # manually load all dependencies
+    for dep in AllDeps
+        JSServe.push!(session, dep)
+    end
     pipelinetabs, visualizationtabs = Tabs(ui.pipelinetabs), Tabs(ui.visualizationtabs)
     layout = DOM.div(
             class="grid grid-cols-3 h-full",

@@ -62,6 +62,8 @@ const ace = JSServe.Dependency(
     [dependency_path("ace.js"), dependency_path("ext-language_tools.js")]
 )
 
+const AllDeps = (UtilitiesJS, agGrid, ace)
+
 abstract type AbstractPipeline{T} end
 abstract type AbstractVisualization{T} end
 
