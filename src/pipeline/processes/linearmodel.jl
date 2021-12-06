@@ -32,6 +32,7 @@ function combinations(v::AbstractVector{T}) where {T}
     return mapfoldl(interactionterm, +, subsets)
 end
 
+# FIXME: remove `+` on first term
 function LinearModel(table::Observable)
 
     method_options = [

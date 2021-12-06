@@ -39,6 +39,12 @@ function (wc::Wildcard)(data)
     for input in inputs
         @eval private_module $input = $(Tables.getcolumn(data, input))
     end
-    @eval private_module $(Meta.parse(wc.card.method.widget.value[]))
+    value = wc.card.method.widget.value[]
+    expr = Meta.parse("""
+        begin
+            $value
+        end
+    """)
+    @eval private_module $expr
     return LittleDict(output => getproperty(private_module, output) for output in outputs)
 end
