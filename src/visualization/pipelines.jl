@@ -8,20 +8,18 @@ function layout(g::SimpleDiGraph)
 end
 
 function jsrender(session::Session, pipelines::Pipelines)
-    # FIXME: set elsewhere
     arrow_size = 25
     edge_width = 5
     node_size = 45
     legend_node_size = 20
     colgap = 150
+
     # set general legend
     palette = [RGB(colorant"black"); Makie.current_default_theme().palette.color[]]
     un = reduce(vcat, get_vertex_names.(pipelines.pipelines))
     uc = palette[eachindex(un)]
     scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Step")
 
-    # FIXME: consider adding filtering as well
-    # FIXME: dot is not removed when removing card, but it should be
     nested_vertices = lift(output(last(pipelines.pipelines))) do _
         return get_vertices.(pipelines.pipelines)
     end
@@ -36,7 +34,6 @@ function jsrender(session::Session, pipelines::Pipelines)
     fig = Figure(; backgroundcolor)
     ax = Axis(fig[1, 1]; width, height, backgroundcolor)
 
-    # TODO: pass observable directly?
     on(g) do graph
         points = layout(graph)
         xlims = extrema(first, points)
