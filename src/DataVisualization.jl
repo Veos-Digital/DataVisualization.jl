@@ -57,6 +57,11 @@ const agGrid = JSServe.Dependency(
     ]
 )
 
+const ace = JSServe.Dependency(
+    :ace,
+    [dependency_path("ace.js"), dependency_path("ext-language_tools.js")]
+)
+
 abstract type AbstractPipeline{T} end
 abstract type AbstractVisualization{T} end
 
@@ -66,6 +71,7 @@ include("utils.jl")
 include("vertices.jl")
 include("components/filepicker.jl")
 include("components/checkboxes.jl")
+include("components/editor.jl")
 include("components/rangeselector.jl")
 include("components/togglers.jl")
 include("components/tabs.jl")
