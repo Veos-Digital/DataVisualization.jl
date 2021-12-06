@@ -4,6 +4,8 @@ struct Vertex
     outputs::Vector{Symbol}
 end
 
+overwrites(vertex::Vertex) = intersect(vertex.inputs, vertex.outputs)
+
 get_vertex_names(vetrices::AbstractArray{Vertex}) = map(vertex -> vertex.name, vetrices)
 
 function simpledigraph(vertices::AbstractArray{Vertex})
@@ -18,7 +20,7 @@ end
 
 # nested case
 function simpledigraph(nested_vertices::AbstractArray{<:AbstractArray{Vertex}})
-    
+
     vertices = reduce(vcat, nested_vertices)
     groups = mapreduce(append!, enumerate(nested_vertices), init=Int[]) do (idx, vertices)
         return fill(idx, length(vertices))
@@ -32,9 +34,6 @@ function simpledigraph(nested_vertices::AbstractArray{<:AbstractArray{Vertex}})
         for i in ii:-1:1
             outputs = vertices[i].outputs
             isdisjoint(outputs, inputs) && continue
-            # FIXME: is there a cleaner way to avoid self loops with filter?
-            # One possibility is to add a "isdestructive" field, when the output
-            # overwrites the input 
             i == j && continue
             setdiff!(inputs, outputs)
             add_edge!(g, i, j)

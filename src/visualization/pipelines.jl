@@ -9,34 +9,28 @@ end
 
 function jsrender(session::Session, pipelines::Pipelines)
     # FIXME: set elsewhere
-    # font = AlgebraOfGraphics.firasans("Medium")
-    # textsize = 28
     arrow_size = 25
     edge_width = 5
     node_size = 45
     legend_node_size = 20
     colgap = 150
     # set general legend
-    palette = Makie.current_default_theme().palette.color[]
+    palette = [RGB(colorant"black"); Makie.current_default_theme().palette.color[]]
     un = reduce(vcat, get_vertex_names.(pipelines.pipelines))
     uc = palette[eachindex(un)]
-    push!(un, :Output)
-    push!(uc, RGB(colorant"black"))
     scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Step")
 
     # FIXME: consider adding filtering as well
     # FIXME: dot is not removed when removing card, but it should be
-    nested_vertices = lift(output(last(pipelines.pipelines))) do value
-        local nested_vertices = get_vertices.(pipelines.pipelines)
-        colnames = collect(Tables.columnnames(value))
-        push!(nested_vertices, [Vertex(:Output, colnames, colnames)])
-        return nested_vertices
+    nested_vertices = lift(output(last(pipelines.pipelines))) do _
+        return get_vertices.(pipelines.pipelines)
     end
     g = @lift simpledigraph($nested_vertices)
 
     names = @lift mapreduce(get_vertex_names, append!, $nested_vertices)
     node_color = @lift AlgebraOfGraphics.rescale($names, scale)
-    # nlabels = @lift string.(eachindex($names))
+    # work around https://github.com/JuliaPlots/GraphMakie.jl/issues/42 
+    edge_color = @lift ne($g) > 0 ? :black : :transparent
     backgroundcolor = colorant"#F3F4F6"
     width, height = Observable(350), Observable(350)
     fig = Figure(; backgroundcolor)
@@ -53,10 +47,9 @@ function jsrender(session::Session, pipelines::Pipelines)
     notify!(g)
     graphplot!(ax, g;
         arrow_show=true, arrow_size, 
-        edge_width, node_color,
-        # nlabels, nlabels_align=(:center, :center), FIXME: support interactivity here
-        # nlabels_attr=(; font, textsize, color=:white),
-        node_size, layout
+        edge_width, edge_color,
+        node_size, node_color,
+        layout
     )
     hidedecorations!(ax)
     hidespines!(ax)
