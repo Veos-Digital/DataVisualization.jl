@@ -43,9 +43,9 @@ function LinearModel(table::Observable)
 
     wdgs = (
         inputs=RichTextField("Inputs", data_options(table, keywords=["+ ", "* "]), ""),
-        output=RichTextField("Outputs", data_options(table, keywords=[""]), ""),
+        target=RichTextField("Target", data_options(table, keywords=[""]), ""),
         method=RichTextField("Method", method_options, ""),
-        rename=RichTextField("Rename", ["" => ["prediction", "error"]], default_names)
+        outputs=RichTextField("Outputs", ["" => ["prediction", "error"]], default_names)
     )
 
     card = ProcessingCard(:Predict; wdgs...)
@@ -55,20 +55,20 @@ end
 function (lm::LinearModel)(data)
     card = lm.card
     inputs_calls = card.inputs.parsed
-    output_call = only(card.output.parsed)
+    target_call = only(card.target.parsed)
     method_call = only(card.method.parsed)
-    rename_call = only(card.rename.parsed)
+    outputs_call = only(card.outputs.parsed)
 
     predictors = ConstantTerm(1)
     for call in inputs_calls
         predictors += combinations(map(Symbol, call.positional))
     end
-    responsevariable = Symbol(only(output_call.positional))
+    responsevariable = Symbol(only(target_call.positional))
 
     response = Term(responsevariable)
     formula = response ~ predictors
 
-    pred_name, err_name = rename_call.positional
+    pred_name, err_name = outputs_call.positional
     distribution, link = Normal(), nothing
     for (k, v) in method_call.named
         k == "noise" && (distribution = noises[Symbol(v)]())

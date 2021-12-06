@@ -85,11 +85,6 @@ for sym in (:on, :onany)
     end
 end
 
-function filter_namedtuple(f, nt)
-    names = filter(key -> f(nt[key]), keys(nt))
-    return NamedTuple{names}(nt)
-end
-
 function move_item(v, (old, new))
     return map(1:length(v)) do i
         i == new && return v[old]
