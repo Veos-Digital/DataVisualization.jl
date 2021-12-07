@@ -27,7 +27,7 @@ function binner(column::RealVector, bins::RealVector)
     return searchsortedfirst.(Ref(bins), column + eps) .- 1
 end
 
-function uniform_bin(column::RealVector, num_bins::Integer)
+function uniform_binner(column::RealVector, num_bins::Integer)
     if is_constant(column) == true
         binned = ones(Int46, length(column))
         return binned
@@ -38,17 +38,21 @@ function uniform_bin(column::RealVector, num_bins::Integer)
     return binner(column, bins)
 end
 
-function log_scale(_::RealVector)
+function quantile_binner(column::RealVector, num_bins::Integer)
+    bins = range(0, stop=1, length=num_bins)
+    return binner(column, quantile(column, bins))    
+
+function log_scaler(_::RealVector)
     return InvertibleScalarFunction(log, exp)
 end
 
-function logistic_scale(_::RealVector)
+function logistic_scaler(_::RealVector)
     sigmoid(x::T) where {T<:Real} = one(T) / (one(T) + exp(-x))
     logit(x::T) where {T<:Real} = log(x / (one(T) - x))
     return InvertibleScalarFunction(sigmoid, logit)
 end
 
-function min_max_scale(column::RealVector, range::RealVector = [0, 1])
+function min_max_scaler(column::RealVector, range::RealVector = [0, 1])
     max_val = maximum(column)
     min_val = minimum(column)
     min_range, max_range = range[1], range[2]
@@ -57,14 +61,14 @@ function min_max_scale(column::RealVector, range::RealVector = [0, 1])
     return InvertibleScalarFunction(f, f⁻¹)
 end
 
-function max_abs_scale(column::RealVector)
+function max_abs_scaler(column::RealVector)
     max_val = maximum(maximum(column), abs(minimum(column)))
     f(x) = x / max_val
     f⁻¹(y) = y * ma_val
     return InvertibleScalarFunction(f, f⁻¹)
 end
 
-function standardize(column::RealVector)
+function standardizer(column::RealVector)
     m = mean(column)
     s = std(column)
     f(x) = (x - m) / s
