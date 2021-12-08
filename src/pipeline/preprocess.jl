@@ -28,9 +28,8 @@ function binner(column::RealVector, bins::RealVector)
 end
 
 function uniform_binner(column::RealVector, num_bins::Integer)
-    if is_constant(column) == true
-        binned = ones(Int46, length(column))
-        return binned
+    if is_constant(column)
+        return ones(Int46, length(column))
     end
     col_min = minimum(column)
     col_max = maximum(column)
@@ -41,6 +40,7 @@ end
 function quantile_binner(column::RealVector, num_bins::Integer)
     bins = range(0, stop=1, length=num_bins)
     return binner(column, quantile(column, bins))    
+end
 
 function log_scaler(_::RealVector)
     return InvertibleScalarFunction(log, exp)
