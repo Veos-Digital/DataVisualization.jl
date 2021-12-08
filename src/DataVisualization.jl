@@ -14,6 +14,7 @@ using Makie.Colors
 using WGLMakie
 using AlgebraOfGraphics
 using AlgebraOfGraphics: density, Layers
+using Statistics: mean, std
 using StatsBase: histrange, fit, quantile
 using MultivariateStats: PCA,
                          PPCA,

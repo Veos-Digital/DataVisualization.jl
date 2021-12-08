@@ -1,4 +1,4 @@
-using DataVisualization: log_scaler, logistic_scaler
+using DataVisualization: log_scaler, logistic_scaler, standardizer
 using DataVisualization: min_max_scaler, max_abs_scaler
 using DataVisualization: binner, quantile_binner, uniform_binner
 
@@ -7,11 +7,12 @@ using DataVisualization: binner, quantile_binner, uniform_binner
     @test 15 |> isf |> inv(isf) ≈ 15
     isf = log_scaler([1.0])
     @test 15 |> isf |> inv(isf) ≈ 15
+    isf = standardizer([1, 10])
+    @test 15 |> isf |> inv(isf) ≈ 15
     isf = min_max_scaler([1, 10])
     @test 15 |> isf |> inv(isf) ≈ 15
     isf = max_abs_scaler([1, 10])
     @test 15 |> isf |> inv(isf) ≈ 15
-    
 end
 
 @testset "Binning test" begin

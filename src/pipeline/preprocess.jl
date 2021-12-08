@@ -62,9 +62,9 @@ function min_max_scaler(column::RealVector, range::RealVector = [0, 1])
 end
 
 function max_abs_scaler(column::RealVector)
-    max_val = maximum(maximum(column), abs(minimum(column)))
+    max_val = maximum([maximum(column), abs(minimum(column))])
     f(x) = x / max_val
-    f⁻¹(y) = y * ma_val
+    f⁻¹(y) = y * max_val
     return InvertibleScalarFunction(f, f⁻¹)
 end
 
