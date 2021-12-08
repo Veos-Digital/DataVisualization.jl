@@ -1,7 +1,7 @@
-using DataVisualization: logistic_scale
+using DataVisualization: logistic_scaler, binner
 
 @testset "logistic scale test" begin
-    isf = logistic_scale([1.0])
+    isf = logistic_scaler([1.0])
     @test 15 |> isf |> inv(isf) ≈ 15
 end
 
