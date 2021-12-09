@@ -1,5 +1,5 @@
 const PIPELINE_TABS = (; Load, Filter, Process)
-const VISUALIZATION_TABS = (; Spreadsheet, Chart)
+const VISUALIZATION_TABS = (; Spreadsheet, Chart, Pipelines)
 
 struct UI
     pipelinetabs::Dict{String, Vector}
@@ -11,19 +11,23 @@ function Base.show(io::IO, ui::UI)
     print(io, "UI with pipelines $(p) and visualizations $(v)")
 end
 
+extract_options(sym::Symbol) = sym, NamedTuple()
+extract_options(p::Pair) = first(p), last(p)
+
 function concatenate(tabs, names, value)
     keys, values = String[], Any[]
-    for name in names
+    for entry in names
+        name, kwargs = extract_options(entry)
         push!(keys, string(name))
-        tab = tabs[name](value)
+        tab = tabs[name](value; kwargs...)
         push!(values, tab)
-        value = something(output(tab), value)
+        value = output(tab)
     end
-    return Dict("keys" => keys, "values" => values), value
+    return Dict("keys" => keys, "values" => values)
 end
 
 """
-    UI(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:Spreadsheet, :Chart))
+    UI(table; pipelinetabs=(:Load, :Filter, :Process), visualizationtabs=(:Spreadsheet, :Chart, :Pipelines))
 
 Generate a `UI` with a given table as starting value. `pipelinetabs` denote the list of
 pipeline tabs to include in the user interface. Each tab can take one of the following types:
@@ -32,22 +36,31 @@ Repetitions are allowed, for example setting
 `tabs=(:Load, :Filter, :Process, :Filter)` would generate a `UI` that
 allowes filtering both before and after processing the data.
 `visualizationtabs` includes the list of visualization tabs to be included in the UI.
-Possible values are `:Spreadsheet` and `Chart`.
+Possible values are `:Spreadsheet`, `Chart` and `:Pipelines`.
 """
 function UI(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
     obs = Observable(to_littledict(table))
-    pipelines, value = concatenate(PIPELINE_TABS, pipelinetabs, obs)
-    visualizations, _ = concatenate(VISUALIZATION_TABS, visualizationtabs, value)
+    pipelines = concatenate(PIPELINE_TABS, pipelinetabs, obs)
+    visualizations = Dict{String, Vector}("keys" => String[], "values" => Any[])
+    for entry in visualizationtabs
+        name, kwargs = extract_options(entry)
+        push!(visualizations["keys"], string(name))
+        push!(visualizations["values"], VISUALIZATION_TABS[name](pipelines["values"]; kwargs...))
+    end
     return UI(pipelines, visualizations)
 end
 
 function jsrender(session::Session, ui::UI)
     evaljs(session, js"document.body.classList.add('bg-gray-100');")
+    # manually load all dependencies
+    for dep in AllDeps
+        JSServe.push!(session, dep)
+    end
     pipelinetabs, visualizationtabs = Tabs(ui.pipelinetabs), Tabs(ui.visualizationtabs)
     layout = DOM.div(
-            class="grid grid-cols-3 h-full",
-            DOM.div(class="col-span-1 pl-8", pipelinetabs),
-            DOM.div(class="col-span-2 pl-12 pr-16", visualizationtabs)
+            class="grid grid-cols-5 h-full",
+            DOM.div(class="col-span-2 pl-8", pipelinetabs),
+            DOM.div(class="col-span-3 pl-12 pr-8", visualizationtabs)
         )
     return jsrender(session, layout)
 end

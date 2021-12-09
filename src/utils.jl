@@ -1,10 +1,13 @@
+const SimpleList = Vector{Any}
+const SimpleDict = Dict{String, Any}
+
 colnames(table) = collect(map(String, Tables.columnnames(table)))
 
 vecmap(f, iter) = [f(el) for el in iter]
 
-function data_options(t::Observable; keywords=[""])
+function data_options(t::Observable; keywords=[""], suffix="")
     return lift(t) do table
-        names = colnames(table)
+        names = map(name -> name * suffix, colnames(table))
         return [keyword => names for keyword in keywords]
     end
 end
@@ -83,11 +86,6 @@ for sym in (:on, :onany)
             end
         end
     end
-end
-
-function filter_namedtuple(f, nt)
-    names = filter(key -> f(nt[key]), keys(nt))
-    return NamedTuple{names}(nt)
 end
 
 function move_item(v, (old, new))

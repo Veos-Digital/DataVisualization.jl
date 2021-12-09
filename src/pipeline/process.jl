@@ -2,15 +2,20 @@ const PROCESSING_STEPS = (
     Predict = LinearModel,
     Cluster = Cluster,
     Project = DimensionalityReduction,
+    Wildcard = Wildcard,
 )
 
 struct Process{T} <: AbstractPipeline{T}
     table::Observable{T}
     list::EditableList
     value::Observable{T}
+    options::Vector{Symbol}
 end
 
-function Process(table::Observable{T}) where {T}
+get_vertices(p::Process) = Vertex.(p.list.steps[])
+get_vertex_names(p::Process) = p.options
+
+function Process(table::Observable{T}; options=[:Predict, :Cluster, :Project]) where {T}
     value = Observable(table[])
     steps = Observable(Any[])
     function thunkify(type)
@@ -34,8 +39,13 @@ function Process(table::Observable{T}) where {T}
             return step
         end
     end
-    options = Observable(to_stringdict(map(thunkify, PROCESSING_STEPS)))
-    process = Process(table, EditableList(options, steps), value)
+    list_options = Observable(
+        Dict(
+            "keys" => [string(option) for option in options],
+            "values" => [thunkify(PROCESSING_STEPS[option]) for option in options],
+        )
+    )
+    process = Process(table, EditableList(list_options, steps), value, collect(options))
     on(table) do data
         _steps = steps[]
         # TODO: contemplate error case
@@ -58,18 +68,12 @@ end
 default_needs_update(step) = shouldrun(step.card.state[])
 always_true(step) = true
 
+Vertex(step::AbstractProcessingStep) = Vertex(step.card.name, columns_in(step), columns_out(step))
+
 nodes_to_compute(steps) = nodes_to_compute(default_needs_update, steps)
 
 function nodes_to_compute(f, steps)
-    columns_input = columns_in.(steps)
-    columns_output = columns_out.(steps)
-    N = length(steps)
-    g = SimpleDiGraph(N)
-    for i in 1:N, j in 1:N
-        if !isdisjoint(columns_input[j], columns_output[i])
-            add_edge!(g, i, j)
-        end
-    end
+    g = simpledigraph(Vertex.(steps))
     sorted = topological_sort_by_dfs(g)
     needs_updating = map(f, steps)
     nodes = Int[]

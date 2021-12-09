@@ -25,8 +25,8 @@ function Cluster(table::Observable{T}) where {T}
 
     wdgs = (
         inputs=RichTextField("Inputs", data_options(table, keywords=["", "weights"]), ""),
+        outputs=RichTextField("Outputs", ["" => ["cluster"]], default_names),
         method=RichTextField("Method", analysis_options, ""),
-        rename=RichTextField("Rename", ["" => ["cluster"]], default_names)
     )
 
     card = ProcessingCard(:Cluster; wdgs...)
@@ -37,15 +37,15 @@ function (cluster::Cluster)(data)
     card = cluster.card
     inputs_call = only(card.inputs.parsed)
     method_call = only(card.method.parsed)
-    rename_call = only(card.rename.parsed)
-    name = only(rename_call.positional)
+    outputs_call = only(card.outputs.parsed)
+    name = only(outputs_call.positional)
 
     dist = Euclidean() # TODO: make configurable
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
     X = reduce(vcat, transpose.(cols))
     kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(data, Symbol(v)), inputs_call.named)
     D = pairwise(dist, X, dims=2)
-    name = only(rename_call.positional)
+    name = only(outputs_call.positional)
 
     an = clusterings[Symbol(only(method_call.fs))]
     input = an === kmeans ? X : D

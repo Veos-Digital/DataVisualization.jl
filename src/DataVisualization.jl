@@ -15,7 +15,7 @@ using WGLMakie
 using AlgebraOfGraphics
 using AlgebraOfGraphics: density, Layers
 using Statistics: mean, std
-using StatsBase: histrange, fit, quantile
+using StatsBase: histrange, fit, quantile, StatsBase
 using MultivariateStats: PCA,
                          PPCA,
                          FactorAnalysis,
@@ -23,18 +23,22 @@ using MultivariateStats: PCA,
                          classical_mds,
                          transform
 using OrderedCollections
-using Graphs: SimpleDiGraph, add_edge!, inneighbors, topological_sort_by_dfs
+using Graphs: SimpleDiGraph, add_edge!, inneighbors, ne, topological_sort_by_dfs
+using LayeredLayouts, GraphMakie
 using Distances: Euclidean, pairwise
 using Clustering
 using GLM, StatsModels
 using Missings: disallowmissing
+
+import RelocatableFolders: @path
 
 export UI
 export set_aog_theme!, update_theme!
 
 WGLMakie.activate!()
 
-dependency_path(fn) = joinpath(@__DIR__, "..", "js_dependencies", fn)
+const dependency_folder = @path joinpath(dirname(@__DIR__), "js_dependencies")
+dependency_path(fn) = joinpath(dependency_folder, fn)
 
 const FormsCSS = JSServe.Asset(dependency_path("forms.min.css"))
 const TailwindCSS = JSServe.Asset(dependency_path("tailwind.min.css"))
@@ -54,15 +58,27 @@ const agGrid = JSServe.Dependency(
     ]
 )
 
+const ace = JSServe.Dependency(
+    :ace,
+    [
+        dependency_path("ace.js"),
+        dependency_path("ext-language_tools.js"),
+        dependency_path("mode-julia.js"),
+    ]
+)
+
+const AllDeps = (UtilitiesJS, agGrid, ace)
+
 abstract type AbstractPipeline{T} end
 abstract type AbstractVisualization{T} end
 
 output(p::AbstractPipeline) = p.value
-output(p::AbstractVisualization) = nothing
 
 include("utils.jl")
+include("vertices.jl")
 include("components/filepicker.jl")
 include("components/checkboxes.jl")
+include("components/editor.jl")
 include("components/rangeselector.jl")
 include("components/togglers.jl")
 include("components/tabs.jl")
@@ -72,14 +88,16 @@ include("components/autocomplete.jl")
 include("components/filters.jl")
 include("components/editablelist.jl")
 include("components/processing_card.jl")
-include("pipeline/processes/linearmodel.jl")
 include("pipeline/processes/clustering.jl")
 include("pipeline/processes/dimensionalityreduction.jl")
+include("pipeline/processes/linearmodel.jl")
+include("pipeline/processes/wildcard.jl")
 include("pipeline/load.jl")
 include("pipeline/filter.jl")
 include("pipeline/preprocess.jl")
 include("pipeline/process.jl")
 include("visualization/chart.jl")
+include("visualization/pipelines.jl")
 include("visualization/spreadsheet.jl")
 include("app.jl")
 

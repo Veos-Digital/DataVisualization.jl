@@ -64,8 +64,8 @@ function DimensionalityReduction(table::Observable)
 
     wdgs = (
         inputs=RichTextField("Inputs", data_options(table, keywords=[""]), ""),
+        outputs=RichTextField("Outputs", ["" => ["projection"]], default_names),
         method=RichTextField("Method", analysis_options, ""),
-        rename=RichTextField("Rename", ["" => ["projection"]], default_names)
     )
 
     card = ProcessingCard(:Project; wdgs...)
@@ -76,8 +76,8 @@ function (dimres::DimensionalityReduction)(data)
     card = dimres.card
     inputs_call = only(card.inputs.parsed)
     method_call = only(card.method.parsed)
-    rename_call = only(card.rename.parsed)
-    name = only(rename_call.positional)
+    outputs_call = only(card.outputs.parsed)
+    name = only(outputs_call.positional)
 
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
     X = reduce(vcat, transpose.(cols))
