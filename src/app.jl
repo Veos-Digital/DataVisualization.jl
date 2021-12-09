@@ -11,11 +11,15 @@ function Base.show(io::IO, ui::UI)
     print(io, "UI with pipelines $(p) and visualizations $(v)")
 end
 
+extract_options(sym::Symbol) = sym, NamedTuple()
+extract_options(p::Pair) = first(p), last(p)
+
 function concatenate(tabs, names, value)
     keys, values = String[], Any[]
-    for name in names
+    for entry in names
+        name, kwargs = extract_options(entry)
         push!(keys, string(name))
-        tab = tabs[name](value)
+        tab = tabs[name](value; kwargs...)
         push!(values, tab)
         value = output(tab)
     end
@@ -38,9 +42,10 @@ function UI(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISU
     obs = Observable(to_littledict(table))
     pipelines = concatenate(PIPELINE_TABS, pipelinetabs, obs)
     visualizations = Dict{String, Vector}("keys" => String[], "values" => Any[])
-    for tab in visualizationtabs
-        push!(visualizations["keys"], string(tab))
-        push!(visualizations["values"], VISUALIZATION_TABS[tab](pipelines["values"]))
+    for entry in visualizationtabs
+        name, kwargs = extract_options(entry)
+        push!(visualizations["keys"], string(name))
+        push!(visualizations["values"], VISUALIZATION_TABS[name](pipelines["values"]; kwargs...))
     end
     return UI(pipelines, visualizations)
 end

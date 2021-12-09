@@ -8,5 +8,16 @@ set_aog_theme!()
 update_theme!(fontsize=24)
 
 (@isdefined server) && close(server)
-server = DataVisualization.serve(penguins, url="0.0.0.0", port=9000)
+
+pipelinetabs = (
+    :Load,
+    :Filter,
+    :Process => (options=[:Predict, :Cluster, :Project, :Wildcard],),
+)
+
+visualizationtabs = (:Spreadsheet, :Chart, :Pipelines)
+
+server = DataVisualization.serve(penguins; pipelinetabs, visualizationtabs,
+    url="0.0.0.0", port=9000, verbose=true)
+
 nothing
