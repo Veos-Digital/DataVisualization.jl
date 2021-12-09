@@ -15,7 +15,7 @@ end
 get_vertices(p::Process) = Vertex.(p.list.steps[])
 get_vertex_names(p::Process) = p.options
 
-function Process(table::Observable{T}; options=[:Predict, :Cluster, :Project]) where {T}
+function Process(table::Observable{T}, options::Vector{Symbol}) where {T}
     value = Observable(table[])
     steps = Observable(Any[])
     function thunkify(type)
@@ -41,11 +41,11 @@ function Process(table::Observable{T}; options=[:Predict, :Cluster, :Project]) w
     end
     list_options = Observable(
         Dict(
-            "keys" => [string(option) for option in options],
-            "values" => [thunkify(PROCESSING_STEPS[option]) for option in options],
+            "keys" => string.(options),
+            "values" => thunkify.(getindex.(Ref(PROCESSING_STEPS), options)),
         )
     )
-    process = Process(table, EditableList(list_options, steps), value, collect(options))
+    process = Process(table, EditableList(list_options, steps), value, options)
     on(table) do data
         _steps = steps[]
         # TODO: contemplate error case
@@ -55,6 +55,10 @@ function Process(table::Observable{T}; options=[:Predict, :Cluster, :Project]) w
         end
     end
     return process
+end
+
+function Process(table::Observable{T}; options=[:Predict, :Cluster, :Project]) where {T}
+    return Process(table, vecmap(Symbol, options))
 end
 
 function jsrender(session::Session, process::Process)
