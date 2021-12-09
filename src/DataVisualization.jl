@@ -14,8 +14,8 @@ using Makie.Colors
 using WGLMakie
 using AlgebraOfGraphics
 using AlgebraOfGraphics: density, Layers
-using LayeredLayouts, GraphMakie
-using StatsBase: histrange, fit, StatsBase
+using Statistics: mean, std
+using StatsBase: histrange, fit, quantile, StatsBase
 using MultivariateStats: PCA,
                          PPCA,
                          FactorAnalysis,
@@ -24,6 +24,7 @@ using MultivariateStats: PCA,
                          transform
 using OrderedCollections
 using Graphs: SimpleDiGraph, add_edge!, inneighbors, ne, topological_sort_by_dfs
+using LayeredLayouts, GraphMakie
 using Distances: Euclidean, pairwise
 using Clustering
 using GLM, StatsModels
@@ -93,6 +94,7 @@ include("pipeline/processes/linearmodel.jl")
 include("pipeline/processes/wildcard.jl")
 include("pipeline/load.jl")
 include("pipeline/filter.jl")
+include("pipeline/preprocess.jl")
 include("pipeline/process.jl")
 include("visualization/chart.jl")
 include("visualization/pipelines.jl")
