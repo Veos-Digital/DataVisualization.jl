@@ -5,4 +5,7 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](http://juliaplots.org/DataVisualization.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](http://juliaplots.org/DataVisualization.jl/dev)
 
-Start julia with `julia --project=app` and include `app/main.jl` to start the interface on `localhost:9000/`.
+Start julia with `julia --project=app` and include `app/main.jl` to start the interface on `127.0.0.1:9000/`.
+
+:warning: The settings in the `app/main.jl` file demo include a wild card, which is insecure on a server, as it can run arbitrary code.
+If you are serving the app publicly, do not include `:Wildcard` among the options.

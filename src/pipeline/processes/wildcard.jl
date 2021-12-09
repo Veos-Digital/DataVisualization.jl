@@ -12,7 +12,7 @@ function tryarguments(value::AbstractString)
     return result
 end
 
-const WILDCARD_MODULES = (Base, StatsBase) # TODO: consider adding more modules
+const WILDCARD_MODULES = (Base, Statistics, StatsBase) # TODO: consider adding more modules
 
 function Wildcard(table::Observable)
     inputs = RichTextField("Inputs", data_options(table, keywords=[""]), "")

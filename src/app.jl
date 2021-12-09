@@ -11,8 +11,8 @@ function Base.show(io::IO, ui::UI)
     print(io, "UI with pipelines $(p) and visualizations $(v)")
 end
 
-extract_options(sym::Symbol) = sym, NamedTuple()
-extract_options(p::Pair) = first(p), last(p)
+extract_options(sym::Union{Symbol, AbstractString}) = Symbol(sym), NamedTuple()
+extract_options((sym, kwargs)::Pair) = Symbol(sym), kwargs
 
 function concatenate(tabs, names, value)
     keys, values = String[], Any[]
