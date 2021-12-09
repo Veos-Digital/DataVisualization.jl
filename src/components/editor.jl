@@ -16,7 +16,6 @@ function jsrender(session::Session, editor::Editor)
     # FIXME: currently, not everything updates when changing observables
     ui = DOM.div(editor.value[]; editor.style)
 
-    # TODO: make meta field customizable
     onload(session, ui, js"""
         function (element){
             const editor = $(ace).edit(element);
