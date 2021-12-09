@@ -1,3 +1,6 @@
+const SimpleList = Vector{Any}
+const SimpleDict = Dict{String, Any}
+
 colnames(table) = collect(map(String, Tables.columnnames(table)))
 
 vecmap(f, iter) = [f(el) for el in iter]

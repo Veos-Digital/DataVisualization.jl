@@ -12,17 +12,26 @@ function tryarguments(value::AbstractString)
     return result
 end
 
+const WILDCARD_MODULES = (Base, StatsBase) # TODO: consider adding more modules
+
 function Wildcard(table::Observable)
     inputs = RichTextField("Inputs", data_options(table, keywords=[""]), "")
     outputs = RichTextField("Outputs", data_options(table, keywords=[""], suffix="_new"), "")
-    options = lift(inputs.widget.value, outputs.widget.value) do inputs, outputs
-        input_options, output_options = tryarguments(inputs), tryarguments(outputs)
-        return vcat(input_options, output_options)
-    end
+    input_suggestions = lift(tryarguments, inputs.widget.value)
+    output_suggestions = lift(tryarguments, outputs.widget.value)
+    suggestions = Observable(
+        [string(name) for m in WILDCARD_MODULES for name in names(m) if getproperty(m, name) isa Function]
+    )
+    # TODO: decide scores
+    autocompleteoptions = Any[
+        SimpleDict("meta" => "input", "words" => input_suggestions, "score" => 2),
+        SimpleDict("meta" => "output", "words" => output_suggestions, "score" => 1),
+        SimpleDict("meta" => "", "words" => suggestions, "score" => -1),
+    ]
     wdgs = (;
         inputs,
         outputs,
-        method=RichEditor("Method", "julia", "", options), # FIXME: pass correct list of options
+        method=RichEditor("Method", "julia", "", autocompleteoptions),
     )
     card = ProcessingCard(:Wildcard; wdgs...)
     return Wildcard(table, card)
@@ -34,8 +43,11 @@ function (wc::Wildcard)(data)
     inputs = Symbol.(inputs_call.positional)
     outputs_call = only(card.outputs.parsed)
     outputs = Symbol.(outputs_call.positional)
-    
+
     private_module = Module()
+    for m in map(Symbol, WILDCARD_MODULES)
+        @eval private_module using DataVisualization.($m)
+    end
     for input in inputs
         @eval private_module $input = $(Tables.getcolumn(data, input))
     end

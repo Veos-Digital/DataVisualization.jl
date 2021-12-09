@@ -15,7 +15,7 @@ using WGLMakie
 using AlgebraOfGraphics
 using AlgebraOfGraphics: density, Layers
 using LayeredLayouts, GraphMakie
-using StatsBase: histrange, fit
+using StatsBase: histrange, fit, StatsBase
 using MultivariateStats: PCA,
                          PPCA,
                          FactorAnalysis,

@@ -2,14 +2,14 @@
 struct Editor
     value::Observable{String}
     language::Observable{String}
-    options::Observable{Vector{String}}
+    entries::SimpleList
     style::Observable{String}
 end
 
-function Editor(value::Observable, language′, options=Observable(String[]))
+function Editor(value::Observable, language′, entries=SimpleList())
     language::Observable{String} = language′
     style = Observable("width: 100%; height: 16rem;")
-    return Editor(value, language, options, style)
+    return Editor(value, language, entries, style)
 end
 
 function jsrender(session::Session, editor::Editor)
@@ -23,7 +23,21 @@ function jsrender(session::Session, editor::Editor)
             const language = $(editor.language[])
             const langTools = $(ace).require("ace/ext/language_tools");
             const langMode = $(ace).require("ace/mode/" + language);
-
+            const completers = $(editor.entries).map(function ({meta, words, score}) {
+                return {
+                    getCompletions: function (editor, session, pos, prefix, callback) {
+                        let wordList = JSServe.get_observable(words);
+                        callback(null, wordList.map(function(word) {
+                            return {
+                                caption: word,
+                                value: word,
+                                meta: meta || "",
+                                score: score || 0
+                            };
+                        }));
+                    }
+                };
+            });
             editor.session.setMode("ace/mode/" + language);
             editor.session.on("change", function () {
                 const value = editor.getValue();
@@ -35,22 +49,9 @@ function jsrender(session::Session, editor::Editor)
                 enableSnippets: true,
                 fontSize: 18,
             });
+            editor.completers.push(...completers);
             editor.renderer.setShowGutter(false);
             editor.setShowPrintMargin(false);
-            const staticWordCompleter = {
-                getCompletions: function(editor, session, pos, prefix, callback) {
-                    const wordList = JSServe.get_observable($(editor.options));
-                    callback(null, wordList.map(function(word) {
-                        const line = session.getLine(pos.row); 
-                        return {
-                            caption: word,
-                            value: word,
-                            meta: "column"
-                        };
-                    }));
-                }
-            };
-            editor.completers.push(staticWordCompleter);
         }
     """)
     return jsrender(session, ui)
@@ -63,8 +64,8 @@ struct RichEditor
     confirmedvalue::Observable{String}
 end
 
-function RichEditor(name, language, default, options::Observable{Vector{String}}=Observable(String[]))
-    wdg = Editor(Observable(default), language, options)
+function RichEditor(name, language, default, entries::SimpleList=SimpleList())
+    wdg = Editor(Observable(default), language, entries)
     return RichEditor(name, wdg, default, Observable(default))
 end
 
