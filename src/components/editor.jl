@@ -16,19 +16,23 @@ function jsrender(session::Session, editor::Editor)
     # FIXME: currently, not everything updates when changing observables
     ui = DOM.div(editor.value[]; editor.style)
 
-    # FIXME: download correct file and set language
-    # editor.session.setMode("ace/mode/" + $(editor.language[]));
-
+    # TODO: make meta field customizable
     onload(session, ui, js"""
         function (element){
             const editor = $(ace).edit(element);
+            const language = $(editor.language[])
             const langTools = $(ace).require("ace/ext/language_tools");
+            const langMode = $(ace).require("ace/mode/" + language);
+
+            editor.session.setMode("ace/mode/" + language);
             editor.session.on("change", function () {
                 const value = editor.getValue();
                 JSServe.update_obs($(editor.value), value);
             });
             editor.setOptions({
                 enableLiveAutocompletion: true,
+                enableBasicAutocompletion: true,
+                enableSnippets: true,
                 fontSize: 18,
             });
             editor.renderer.setShowGutter(false);
@@ -41,11 +45,12 @@ function jsrender(session::Session, editor::Editor)
                         return {
                             caption: word,
                             value: word,
+                            meta: "column"
                         };
                     }));
                 }
             };
-            editor.completers = [staticWordCompleter];
+            editor.completers.push(staticWordCompleter);
         }
     """)
     return jsrender(session, ui)

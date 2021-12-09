@@ -59,7 +59,11 @@ const agGrid = JSServe.Dependency(
 
 const ace = JSServe.Dependency(
     :ace,
-    [dependency_path("ace.js"), dependency_path("ext-language_tools.js")]
+    [
+        dependency_path("ace.js"),
+        dependency_path("ext-language_tools.js"),
+        dependency_path("mode-julia.js"),
+    ]
 )
 
 const AllDeps = (UtilitiesJS, agGrid, ace)
