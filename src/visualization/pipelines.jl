@@ -15,7 +15,7 @@ function jsrender(session::Session, pipelines::Pipelines)
     colgap = 150
 
     # set general legend
-    palette = [RGB(colorant"black"); Makie.current_default_theme().palette.color[]]
+    palette = vcat(RGB(colorant"black"), Makie.current_default_theme().palette.color[])
     un = reduce(vcat, get_vertex_names.(pipelines.pipelines))
     uc = palette[eachindex(un)]
     scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Step")

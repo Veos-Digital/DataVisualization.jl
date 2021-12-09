@@ -2,18 +2,20 @@ const PROCESSING_STEPS = (
     Predict = LinearModel,
     Cluster = Cluster,
     Project = DimensionalityReduction,
+    Wildcard = Wildcard,
 )
 
 struct Process{T} <: AbstractPipeline{T}
     table::Observable{T}
     list::EditableList
     value::Observable{T}
+    options::Vector{Symbol}
 end
 
 get_vertices(p::Process) = Vertex.(p.list.steps[])
-get_vertex_names(p::Process) = collect(keys(PROCESSING_STEPS))
+get_vertex_names(p::Process) = p.options
 
-function Process(table::Observable{T}) where {T}
+function Process(table::Observable{T}; options=[:Predict, :Cluster, :Project]) where {T}
     value = Observable(table[])
     steps = Observable(Any[])
     function thunkify(type)
@@ -37,8 +39,13 @@ function Process(table::Observable{T}) where {T}
             return step
         end
     end
-    options = Observable(to_stringdict(map(thunkify, PROCESSING_STEPS)))
-    process = Process(table, EditableList(options, steps), value)
+    list_options = Observable(
+        Dict(
+            "keys" => [string(option) for option in options],
+            "values" => [thunkify(PROCESSING_STEPS[option]) for option in options],
+        )
+    )
+    process = Process(table, EditableList(list_options, steps), value, collect(options))
     on(table) do data
         _steps = steps[]
         # TODO: contemplate error case

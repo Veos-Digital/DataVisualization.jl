@@ -15,7 +15,7 @@ using WGLMakie
 using AlgebraOfGraphics
 using AlgebraOfGraphics: density, Layers
 using LayeredLayouts, GraphMakie
-using StatsBase: histrange, fit
+using StatsBase: histrange, fit, StatsBase
 using MultivariateStats: PCA,
                          PPCA,
                          FactorAnalysis,
@@ -57,6 +57,17 @@ const agGrid = JSServe.Dependency(
     ]
 )
 
+const ace = JSServe.Dependency(
+    :ace,
+    [
+        dependency_path("ace.js"),
+        dependency_path("ext-language_tools.js"),
+        dependency_path("mode-julia.js"),
+    ]
+)
+
+const AllDeps = (UtilitiesJS, agGrid, ace)
+
 abstract type AbstractPipeline{T} end
 abstract type AbstractVisualization{T} end
 
@@ -66,6 +77,7 @@ include("utils.jl")
 include("vertices.jl")
 include("components/filepicker.jl")
 include("components/checkboxes.jl")
+include("components/editor.jl")
 include("components/rangeselector.jl")
 include("components/togglers.jl")
 include("components/tabs.jl")
@@ -75,9 +87,10 @@ include("components/autocomplete.jl")
 include("components/filters.jl")
 include("components/editablelist.jl")
 include("components/processing_card.jl")
-include("pipeline/processes/linearmodel.jl")
 include("pipeline/processes/clustering.jl")
 include("pipeline/processes/dimensionalityreduction.jl")
+include("pipeline/processes/linearmodel.jl")
+include("pipeline/processes/wildcard.jl")
 include("pipeline/load.jl")
 include("pipeline/filter.jl")
 include("pipeline/process.jl")

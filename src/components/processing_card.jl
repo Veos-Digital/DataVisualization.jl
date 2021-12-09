@@ -52,9 +52,9 @@ end
 struct ProcessingCard
     name::Symbol
     inputs::RichTextField
-    output::Union{RichTextField, Nothing}
-    method::RichTextField
-    rename::RichTextField
+    target::Union{RichTextField, Nothing}
+    outputs::RichTextField
+    method::Union{RichTextField, RichEditor}
     process_button::Button
     clear_button::Button
     state::Observable{State}
@@ -65,7 +65,8 @@ struct ProcessingCard
 end
 
 function autocompletes(card::ProcessingCard)
-    return filter_namedtuple(!isnothing, (; card.inputs, card.output, card.method, card.rename))
+    textfields = (card.inputs, card.target, card.outputs, card.method)
+    return filter(!isnothing, textfields)
 end
 
 function process!(card::ProcessingCard)
@@ -82,9 +83,9 @@ end
 
 function ProcessingCard(name;
                         inputs,
-                        output=nothing,
+                        target=nothing,
+                        outputs,
                         method,
-                        rename,
                         process_button=Button("Process", class=buttonclass(true)),
                         clear_button=Button("Clear", class=buttonclass(false)),
                         state=Observable(inactive),
@@ -96,9 +97,9 @@ function ProcessingCard(name;
     card = ProcessingCard(
         name,
         inputs,
-        output,
+        target,
+        outputs,
         method,
-        rename,
         process_button,
         clear_button,
         state,
@@ -129,12 +130,12 @@ function used_columns(args::AbstractVector{Call}...)
 end
 
 function columns_in(card::ProcessingCard)
-    args = [t.parsed for t in [card.inputs, card.output] if !isnothing(t)]
+    args = [t.parsed for t in [card.inputs, card.target] if !isnothing(t)]
     return used_columns(args...)
 end
 
 function columns_out(card::ProcessingCard)
-    return isempty(columns_in(card)) ? Symbol[] : used_columns(card.rename.parsed)
+    return isempty(columns_in(card)) ? Symbol[] : used_columns(card.outputs.parsed)
 end
 
 function jsrender(session::Session, card::ProcessingCard)
