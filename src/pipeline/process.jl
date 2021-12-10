@@ -95,19 +95,17 @@ compute_pipeline(input, cache, steps) = compute_pipeline(default_needs_update, i
 function compute_pipeline(f, input, cache, steps)
     nodes =  nodes_to_compute(f, steps)
     result = SimpleTable(input)
+    # Add outputs of nodes that do not need to be recomputed
     for node in setdiff(1:length(steps), nodes)
-        for key in columns_out(steps[node])
-            haskey(result, key) && throw(ArgumentError("Overwriting table is not allowed"))
-            result[key] = cache[key]
-        end
+        partial = LittleDict(key => Tables.getcolumn(cache, key) for key in columns_out(steps[node]))
+        mergedisjointcols!(result, partial)
     end
+    # Recompute nodes, which were returned in topological order
     for node in nodes
         step = steps[node]
         if !isempty(columns_in(step))
             try
-                mergecolswith!(result, step(result)) do _, _
-                    throw(ArgumentError("Overwriting table is not allowed"))
-                end
+                mergedisjointcols!(result, step(result))
                 step.card.state[] = done
             catch e
                 step.card.error[] = sprint(showerror, e)

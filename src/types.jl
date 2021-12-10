@@ -24,9 +24,18 @@ function mapcols!(f, s::SimpleTable)
     return s
 end
 
+to_dict(s) = SimpleTable(s).data
+to_dict(s::AbstractDict) = s
+
 function mergecolswith!(f, s::SimpleTable, others...)
-    mapfoldl(t -> SimpleTable(t).data, mergewith!(f), others, init=s.data)
+    mapfoldl(to_dict, mergewith!(f), others, init=s.data)
     return s
+end
+
+function mergedisjointcols!(s::SimpleTable, others...)
+    return mergecolswith!(s, others...) do _, _
+        throw(ArgumentError("Overwriting table is not allowed"))
+    end
 end
 
 Tables.istable(::SimpleTable) = true
@@ -37,13 +46,15 @@ Tables.columns(s::SimpleTable) = s
 
 Tables.columnnames(s::SimpleTable) = collect(Symbol, keys(s.data))
 
-function Tables.getcolumn(s::SimpleTable, key::Symbol)
-    return get(s.data, key) do
+# Port `DataFrame` behavior of suggesting alternative column names
+function Tables.getcolumn(s::SimpleTable, name::Symbol)
+    return get(s.data, name) do
         options = Tables.columnnames(s)
-        distances = stringdistance.(key, options)
+        distances = stringdistance.(name, options)
         min_distance = minimum(distances)
         suggestions = options[findall(==(min_distance), distances)]
-        msg = "Column $(key) not found, closest alternatives are: " * join(suggestions, ", ")
+        nearestnames = join(suggestions, ", ")
+        msg = "There isn't a variable called '$name' in your data; the nearest names appear to be: $nearestnames"
         throw(ArgumentError(msg))
     end
 end

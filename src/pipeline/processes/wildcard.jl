@@ -58,5 +58,5 @@ function (wc::Wildcard)(data)
         end
     """)
     @eval private_module $expr
-    return LittleDict{Symbol, AbstractVector}(output => getproperty(private_module, output) for output in outputs)
+    return LittleDict(output => getproperty(private_module, output) for output in outputs)
 end
