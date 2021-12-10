@@ -1,6 +1,6 @@
-function stringdistance(s, t; preprocess=lowercase, method=DamerauLevenshtein())
+function stringdistance(s, t; preprocess=lowercase)
     args = map(preprocess∘string, (s, t))
-    return method(args...)
+    return levenshtein(args...)
 end
 
 colnames(table) = string.(Tables.columnnames(table))

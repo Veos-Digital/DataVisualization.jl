@@ -264,7 +264,7 @@ uuid = "e2d170a0-9d28-54be-80f0-106bbe20a464"
 version = "1.0.0"
 
 [[deps.DataVisualization]]
-deps = ["AlgebraOfGraphics", "CSV", "Clustering", "Distances", "GLM", "GraphMakie", "Graphs", "JSServe", "LayeredLayouts", "Makie", "Missings", "MultivariateStats", "Observables", "OrderedCollections", "RelocatableFolders", "Sockets", "Statistics", "StatsBase", "StatsModels", "StringDistances", "StructArrays", "Tables", "WGLMakie"]
+deps = ["AlgebraOfGraphics", "CSV", "Clustering", "Distances", "GLM", "GraphMakie", "Graphs", "JSServe", "LayeredLayouts", "Makie", "Missings", "MultivariateStats", "Observables", "OrderedCollections", "REPL", "RelocatableFolders", "Sockets", "Statistics", "StatsBase", "StatsModels", "StructArrays", "Tables", "WGLMakie"]
 path = ".."
 uuid = "de49ba16-8f50-42c0-953a-2dd264fb1ae7"
 version = "0.1.0"
@@ -1274,12 +1274,6 @@ deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "REPL", "Shifted
 git-tree-sha1 = "677488c295051568b0b79a77a8c44aa86e78b359"
 uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
 version = "0.6.28"
-
-[[deps.StringDistances]]
-deps = ["Distances", "StatsAPI"]
-git-tree-sha1 = "ceeef74797d961aee825aabf71446d6aba898acb"
-uuid = "88034a9c-02f8-509d-84a9-84ec65e18404"
-version = "0.11.2"
 
 [[deps.StructArrays]]
 deps = ["Adapt", "DataAPI", "StaticArrays", "Tables"]

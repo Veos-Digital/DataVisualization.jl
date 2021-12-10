@@ -26,7 +26,7 @@ using OrderedCollections
 using Graphs: SimpleDiGraph, add_edge!, inneighbors, ne, topological_sort_by_dfs
 using LayeredLayouts, GraphMakie
 using Distances: Euclidean, pairwise
-using StringDistances: DamerauLevenshtein
+using REPL: levenshtein
 using Clustering
 using GLM, StatsModels
 using Missings: disallowmissing
