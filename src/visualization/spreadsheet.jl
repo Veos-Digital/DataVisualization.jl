@@ -1,5 +1,5 @@
-struct Spreadsheet{T} <: AbstractVisualization{T}
-    table::Observable{T}
+struct Spreadsheet <: AbstractVisualization
+    table::Observable{SimpleTable}
 end
 
 Spreadsheet(pipelines::AbstractVector) = Spreadsheet(output(last(pipelines)))

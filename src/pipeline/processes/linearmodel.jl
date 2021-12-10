@@ -1,5 +1,5 @@
-struct LinearModel{T} <: AbstractProcessingStep{T}
-    table::Observable{T}
+struct LinearModel <: AbstractProcessingStep
+    table::Observable{SimpleTable}
     card::ProcessingCard
 end
 
@@ -33,7 +33,7 @@ function combinations(v::AbstractVector{T}) where {T}
 end
 
 # FIXME: remove `+` on first term
-function LinearModel(table::Observable)
+function LinearModel(table::Observable{SimpleTable})
 
     method_options = [
         "noise" => vecmap(string, keys(noises)),

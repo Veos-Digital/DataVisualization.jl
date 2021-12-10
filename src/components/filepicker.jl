@@ -40,5 +40,5 @@ end
 
 function readfiles(files::AbstractDict)
     datasets = [CSV.File(codeunits(file)) for file in to_vec(files)]
-    return to_littledict(reduce(vcat, datasets))
+    return SimpleTable(reduce(vcat, datasets))
 end

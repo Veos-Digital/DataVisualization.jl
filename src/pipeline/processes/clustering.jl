@@ -1,5 +1,5 @@
-struct Cluster{T} <: AbstractProcessingStep{T}
-    table::Observable{T}
+struct Cluster <: AbstractProcessingStep
+    table::Observable{SimpleTable}
     card::ProcessingCard
 end
 
@@ -10,7 +10,7 @@ const clusterings = (
     affinityprop=affinityprop,
 )
 
-function Cluster(table::Observable{T}) where {T}
+function Cluster(table::Observable{SimpleTable})
     analysis_names = collect(map(string, keys(clusterings)))
 
     analysis_options = vecmap(analysis_names) do name

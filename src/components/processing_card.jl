@@ -1,4 +1,4 @@
-abstract type AbstractProcessingStep{T} end
+abstract type AbstractProcessingStep end
 
 jsrender(session::Session, step::AbstractProcessingStep) = jsrender(session, step.card)
 

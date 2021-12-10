@@ -1,5 +1,5 @@
-struct DimensionalityReduction{T} <: AbstractProcessingStep{T}
-    table::Observable{T}
+struct DimensionalityReduction <: AbstractProcessingStep
+    table::Observable{SimpleTable}
     card::ProcessingCard
 end
 
@@ -51,7 +51,7 @@ const dimensionalityreductions = (
     mds=MDS,
 )
 
-function DimensionalityReduction(table::Observable)
+function DimensionalityReduction(table::Observable{SimpleTable})
 
     analysis_names = collect(map(string, keys(dimensionalityreductions)))
 

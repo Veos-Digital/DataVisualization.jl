@@ -26,6 +26,7 @@ using OrderedCollections
 using Graphs: SimpleDiGraph, add_edge!, inneighbors, ne, topological_sort_by_dfs
 using LayeredLayouts, GraphMakie
 using Distances: Euclidean, pairwise
+using StringDistances: DamerauLevenshtein
 using Clustering
 using GLM, StatsModels
 using Missings: disallowmissing
@@ -69,11 +70,12 @@ const ace = JSServe.Dependency(
 
 const AllDeps = (UtilitiesJS, agGrid, ace)
 
-abstract type AbstractPipeline{T} end
-abstract type AbstractVisualization{T} end
+abstract type AbstractPipeline end
+abstract type AbstractVisualization end
 
 output(p::AbstractPipeline) = p.value
 
+include("types.jl")
 include("utils.jl")
 include("vertices.jl")
 include("components/filepicker.jl")

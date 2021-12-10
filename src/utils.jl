@@ -1,7 +1,9 @@
-const SimpleList = Vector{Any}
-const SimpleDict = Dict{String, Any}
+function stringdistance(s, t; preprocess=lowercase, method=DamerauLevenshtein())
+    args = map(preprocess∘string, (s, t))
+    return method(args...)
+end
 
-colnames(table) = collect(map(String, Tables.columnnames(table)))
+colnames(table) = string.(Tables.columnnames(table))
 
 vecmap(f, iter) = [f(el) for el in iter]
 
@@ -10,14 +12,6 @@ function data_options(t::Observable; keywords=[""], suffix="")
         names = map(name -> name * suffix, colnames(table))
         return [keyword => names for keyword in keywords]
     end
-end
-
-# This simple untyped dictionary is the preferred way to store tables
-function to_littledict(data)
-    cols = Tables.columns(data)
-    names = collect(Symbol, Tables.columnnames(cols))
-    columns = AbstractVector[Tables.getcolumn(cols, colname) for colname in names]
-    return LittleDict{Symbol, AbstractVector}(names, columns)
 end
 
 iscontinuous(v::AbstractVector) = false

@@ -1,5 +1,5 @@
-struct Wildcard{T} <: AbstractProcessingStep{T}
-    table::Observable{T}
+struct Wildcard <: AbstractProcessingStep
+    table::Observable{SimpleTable}
     card::ProcessingCard
 end
 
@@ -14,7 +14,7 @@ end
 
 const WILDCARD_MODULES = (Base, Statistics, StatsBase) # TODO: consider adding more modules
 
-function Wildcard(table::Observable)
+function Wildcard(table::Observable{SimpleTable})
     inputs = RichTextField("Inputs", data_options(table, keywords=[""]), "")
     outputs = RichTextField("Outputs", data_options(table, keywords=[""], suffix="_new"), "")
     input_suggestions = lift(tryarguments, inputs.widget.value)

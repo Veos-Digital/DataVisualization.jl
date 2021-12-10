@@ -44,9 +44,7 @@ function selected_data(f::Filters, table)
         column = Tables.getcolumn(data, colname)
         return filter_column!(acc, column, wdg)
     end
-    d = to_littledict(data)
-    map!(t -> t[selected], values(d))
-    return d
+    return mapcols!(t -> t[selected], SimpleTable(data))
 end
 
 jsrender(session::Session, filters::Filters) = jsrender(session, Togglers(filters.options))

@@ -81,12 +81,12 @@ function specs_options(session::Session, specs::PlotSpecs; name)
     end
 end
 
-struct Chart{T} <: AbstractVisualization{T}
-    table::Observable{T}
+struct Chart <: AbstractVisualization
+    table::Observable{SimpleTable}
     plotspecs::PlotSpecs
 end
 
-Chart(table::Observable{T}) where {T} = Chart{T}(table, PlotSpecs(table))
+Chart(table::Observable{SimpleTable}) = Chart(table, PlotSpecs(table))
 Chart(pipelines::AbstractVector) = Chart(output(last(pipelines)))
 
 to_algebraic(chart::Chart) = data(chart.table[]) * to_algebraic(chart.plotspecs)
