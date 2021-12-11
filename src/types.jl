@@ -1,60 +1,64 @@
 const SimpleList = Vector{Any}
 const SimpleDict = Dict{String, Any}
-const SimpleLittleDict{K, V} = LittleDict{K, V, Vector{K}, Vector{V}}
 
+# This simple table type is the preferred way to store tables
 struct SimpleTable
-    data::SimpleLittleDict{Symbol, AbstractVector}
-    SimpleTable(data::SimpleLittleDict{Symbol, AbstractVector}) = new(data)
+    names::Vector{Symbol}
+    columns::Vector{AbstractVector}
 end
 
-# This simple untyped dictionary is the preferred way to store tables
 function SimpleTable(data)
     cols = Tables.columns(data)
     names = collect(Symbol, Tables.columnnames(cols))
-    columns = AbstractVector[Tables.getcolumn(cols, colname) for colname in names]
-    dict = LittleDict{Symbol, AbstractVector}(names, columns)
-    return SimpleTable(dict)
+    columns = AbstractVector[Tables.getcolumn(cols, name) for name in names]
+    return SimpleTable(names, columns)
 end
 
-Base.copy(s::SimpleTable) = SimpleTable(copy(s.data))
-SimpleTable(s::SimpleTable) = copy(s)
+function SimpleTable(ps::Pair...)
+    names = Symbol[first(p) for p in ps]
+    columns = AbstractVector[last(p) for p in ps]
+    return SimpleTable(names, columns)
+end
+
+Base.copy(s::SimpleTable) = SimpleTable(copy(s.names), copy(s.columns))
 
 function mapcols!(f, s::SimpleTable)
-    map!(f, values(s.data))
+    map!(f, s.columns, s.columns)
     return s
 end
 
-to_dict(s) = SimpleTable(s).data
-to_dict(s::AbstractDict) = s
-
-function mergecolswith!(f, s::SimpleTable, others...)
-    mapfoldl(to_dict, mergewith!(f), others, init=s.data)
-    return s
-end
-
-function mergedisjointcols!(s::SimpleTable, others...)
-    return mergecolswith!(s, others...) do _, _
-        throw(ArgumentError("Overwriting table is not allowed"))
+function mergedisjointcols!(s::SimpleTable, t::SimpleTable)
+    sharedkeys = intersect(s.names, t.names)
+    if isempty(sharedkeys)
+        append!(s.names, t.names)
+        append!(s.columns, t.columns)
+        return s
+    else
+        msg = "Overwriting table is not allowed, " *
+            "the following column names are repeated: " *
+            join(sharedkeys, ", ")
+        throw(ArgumentError(msg))
     end
 end
 
 Tables.istable(::SimpleTable) = true
-Tables.schema(s::SimpleTable) = Tables.schema(s.data)
+Tables.schema(s::SimpleTable) = Tables.Schema(copy(s.names), eltype.(s.columns))
 
 Tables.columnaccess(::SimpleTable) = true
 Tables.columns(s::SimpleTable) = s
 
-Tables.columnnames(s::SimpleTable) = collect(Symbol, keys(s.data))
+Tables.columnnames(s::SimpleTable) = copy(s.names)
+
+function suggestnames(s::SimpleTable, name::Symbol)
+    options = fuzzymatch(s.names, name)
+    nearestnames = join(options, ", ")
+    msg = "There isn't a variable called '$name' in your data; the nearest names appear to be: $nearestnames"
+    throw(ArgumentError(msg))
+end
 
 # Port `DataFrame` behavior of suggesting alternative column names
 function Tables.getcolumn(s::SimpleTable, name::Symbol)
-    return get(s.data, name) do
-        options = Tables.columnnames(s)
-        distances = stringdistance.(name, options)
-        min_distance = minimum(distances)
-        suggestions = options[findall(==(min_distance), distances)]
-        nearestnames = join(suggestions, ", ")
-        msg = "There isn't a variable called '$name' in your data; the nearest names appear to be: $nearestnames"
-        throw(ArgumentError(msg))
-    end
+    idx = findfirst(==(name), s.names)
+    # Give descriptive error if the name is not found
+    return isnothing(idx) ? suggestnames(s, name) : s.columns[idx]
 end

@@ -93,5 +93,8 @@ function (dimres::DimensionalityReduction)(data)
     an = dimensionalityreductions[Symbol(only(method_call.fs))]
     projected_data = project(an, X; options...)
     rows = eachrow(projected_data)
-    return LittleDict(Symbol(name, '_', i) => row for (i, row) in enumerate(rows))
+    return SimpleTable(
+        Symbol.(name, '_', eachindex(rows)),
+        collect(AbstractVector, rows)
+    )
 end

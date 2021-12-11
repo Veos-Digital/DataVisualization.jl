@@ -97,8 +97,9 @@ function compute_pipeline(f, input, cache, steps)
     result = SimpleTable(input)
     # Add outputs of nodes that do not need to be recomputed
     for node in setdiff(1:length(steps), nodes)
-        partial = LittleDict(key => Tables.getcolumn(cache, key) for key in columns_out(steps[node]))
-        mergedisjointcols!(result, partial)
+        names = columns_out(steps[node])
+        columns = AbstractVector[Tables.getcolumn(cache, name) for name in names]
+        mergedisjointcols!(result, SimpleTable(names, columns))
     end
     # Recompute nodes, which were returned in topological order
     for node in nodes

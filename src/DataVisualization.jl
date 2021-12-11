@@ -22,7 +22,6 @@ using MultivariateStats: PCA,
                          ICA,
                          classical_mds,
                          transform
-using OrderedCollections
 using Graphs: SimpleDiGraph, add_edge!, inneighbors, ne, topological_sort_by_dfs
 using LayeredLayouts, GraphMakie
 using Distances: Euclidean, pairwise

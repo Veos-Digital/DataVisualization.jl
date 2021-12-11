@@ -58,5 +58,5 @@ function (cluster::Cluster)(data)
         end
     end
     anres = an(input, positional...; named...)
-    return LittleDict(Symbol(name) => map(nonnumeric, Clustering.assignments(anres)))
+    return SimpleTable(Symbol(name) => map(nonnumeric, Clustering.assignments(anres)))
 end

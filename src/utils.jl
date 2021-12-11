@@ -1,6 +1,14 @@
-function stringdistance(s, t; preprocess=lowercase)
-    args = map(preprocess∘string, (s, t))
-    return levenshtein(args...)
+"""
+This is borrowed from DataFrames.jl. Suggest up to 8 names in which differ little
+from what the user typed in Levenshtein distance.
+"""
+function fuzzymatch(colnames, name::Symbol)
+    ucname = uppercase(string(name))
+    dist = [(levenshtein(uppercase(string(x)), ucname), x) for x in colnames]
+    sort!(dist)
+    c = [count(x -> x[1] <= i, dist) for i in 0:2]
+    maxd = max(0, searchsortedlast(c, 8) - 1)
+    return [s for (d, s) in dist if d <= maxd]
 end
 
 colnames(table) = string.(Tables.columnnames(table))

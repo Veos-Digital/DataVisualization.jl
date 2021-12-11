@@ -58,5 +58,8 @@ function (wc::Wildcard)(data)
         end
     """)
     @eval private_module $expr
-    return LittleDict(output => getproperty(private_module, output) for output in outputs)
+    return SimpleTable(
+        outputs,
+        getproperty.(Ref(private_module), outputs)
+    )
 end

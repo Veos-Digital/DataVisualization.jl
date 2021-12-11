@@ -77,7 +77,7 @@ function (lm::LinearModel)(data)
     end
     model = glm(formula, data, distribution, something(link, canonicallink(distribution)))
     anres = disallowmissing(predict(model, data)) # FIXME: support missing data in AoG
-    return LittleDict(
+    return SimpleTable(
         Symbol(pred_name) => anres,
         Symbol(err_name) => Tables.getcolumn(data, responsevariable) - anres
     )
