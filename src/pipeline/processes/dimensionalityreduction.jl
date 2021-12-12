@@ -5,15 +5,14 @@ end
 
 function columns_out(step::DimensionalityReduction)
     card = step.card
-    output_names = columns_out(card)
-    isempty(output_names) && return Symbol[]
-    basename = only(output_names)
-    method_call = only(card.method.parsed)
-    dims = nothing
+    isempty(columns_in(card)) && return Symbol[]
+    name = extract_positional(card, :outputs)
+    method_call = extract_call(card, :method)
+    dims = 0
     for (k, v) in method_call.named
         k == "dims" && (dims = parse(Int, v))
     end
-    return isnothing(dims) ? Symbol[] : [Symbol(basename, "_", i) for i in 1:dims]
+    return Symbol.(name, '_', 1:dims)
 end
 
 # Add custom type to represent multi-dimensional scaling
@@ -74,10 +73,9 @@ end
 
 function (dimres::DimensionalityReduction)(data)
     card = dimres.card
-    inputs_call = only(card.inputs.parsed)
-    method_call = only(card.method.parsed)
-    outputs_call = only(card.outputs.parsed)
-    name = only(outputs_call.positional)
+    inputs_call = extract_call(card, :inputs)
+    method_call = extract_call(card, :method)
+    name = extract_positional(card, :outputs)
 
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
     X = reduce(vcat, transpose.(cols))

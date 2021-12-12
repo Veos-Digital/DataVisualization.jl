@@ -39,9 +39,9 @@ end
 
 function (wc::Wildcard)(data)
     card = wc.card
-    inputs_call = only(card.inputs.parsed)
+    inputs_call = extract_call(card, :inputs)
     inputs = Symbol.(inputs_call.positional)
-    outputs_call = only(card.outputs.parsed)
+    outputs_call = extract_call(card, :outputs)
     outputs = Symbol.(outputs_call.positional)
 
     private_module = Module()
