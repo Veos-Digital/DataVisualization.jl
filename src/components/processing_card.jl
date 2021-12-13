@@ -138,24 +138,6 @@ function columns_out(card::ProcessingCard)
     return isempty(columns_in(card)) ? Symbol[] : used_columns(card.outputs.parsed)
 end
 
-function extract_call(card::ProcessingCard, sym::Symbol, n=1)
-    calls = getproperty(card, sym).parsed
-    length(calls) == 1 || throw(ArgumentError("Field $sym must have a unique addend"))
-    return first(calls) 
-end
-
-function extract_positional(card::ProcessingCard, sym::Symbol)
-    positionals = extract_call(card, sym).positional
-    length(positionals) == 1 || throw(ArgumentError("Field $sym must have a unique positional argument"))
-    return first(positionals)
-end
-
-function extract_positionals(card::ProcessingCard, sym::Symbol, n::Int)
-    positionals = extract_call(card, sym).positional
-    length(positionals) == n || throw(ArgumentError("Field $sym must have exactly $n positional arguments"))
-    return positionals    
-end
-
 function jsrender(session::Session, card::ProcessingCard)
     statetracker = StateTracker(card.state, card.edited)
     hide_error = map(!=(errored), session, card.state, result=Observable{Bool}())

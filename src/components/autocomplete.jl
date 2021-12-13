@@ -107,6 +107,24 @@ function reset!(rtf::RichTextField)
     parse!(rtf)
 end
 
+function extract_call(rtf::RichTextField)
+    calls = rtf.parsed
+    length(calls) == 1 || throw(ArgumentError("Field $(rtf.name) must have a unique addend"))
+    return first(calls) 
+end
+
+function extract_positional(rtf::RichTextField)
+    positionals = extract_call(rtf).positional
+    length(positionals) == 1 || throw(ArgumentError("Field $(rtf.name) must have a unique positional argument"))
+    return first(positionals)
+end
+
+function extract_positionals(rtf::RichTextField, n::Int)
+    positionals = extract_call(rtf).positional
+    length(positionals) == n || throw(ArgumentError("Field $(rtf.name) must have exactly $n positional arguments"))
+    return positionals
+end
+
 function jsrender(session::Session, rtf::RichTextField)
     label = DOM.p(class="text-blue-800 text-xl font-semibold py-4 w-full text-left", rtf.name)
     ui = DOM.div(class="mb-4", label, rtf.widget)

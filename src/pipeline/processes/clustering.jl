@@ -35,9 +35,9 @@ end
 
 function (cluster::Cluster)(data)
     card = cluster.card
-    inputs_call = extract_call(card, :inputs)
-    method_call = extract_call(card, :method)
-    name = extract_positional(card, :outputs)
+    inputs_call = extract_call(card.inputs)
+    method_call = extract_call(card.method)
+    name = extract_positional(card.outputs)
 
     dist = Euclidean() # TODO: make configurable
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))

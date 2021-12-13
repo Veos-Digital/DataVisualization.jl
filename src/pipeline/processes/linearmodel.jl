@@ -56,18 +56,18 @@ end
 function (lm::LinearModel)(data)
     card = lm.card
     inputs_calls = card.inputs.parsed
-    method_call = extract_call(card, :method)
+    method_call = extract_call(card.method)
 
     predictors = ConstantTerm(1)
     for call in inputs_calls
         predictors += combinations(map(Symbol, call.positional))
     end
-    responsevariable = Symbol(extract_positional(card, :target))
+    responsevariable = Symbol(extract_positional(card.target))
 
     response = Term(responsevariable)
     formula = response ~ predictors
 
-    pred_name, err_name = extract_positionals(card, :outputs, 2)
+    pred_name, err_name = extract_positionals(card.outputs, 2)
     distribution, link = Normal(), nothing
     for (k, v) in method_call.named
         k == "noise" && (distribution = noises[Symbol(v)]())

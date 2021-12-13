@@ -6,8 +6,8 @@ end
 function columns_out(step::DimensionalityReduction)
     card = step.card
     isempty(columns_in(card)) && return Symbol[]
-    name = extract_positional(card, :outputs)
-    method_call = extract_call(card, :method)
+    name = extract_positional(card.outputs)
+    method_call = extract_call(card.method)
     dims = 0
     for (k, v) in method_call.named
         k == "dims" && (dims = parse(Int, v))
@@ -73,9 +73,9 @@ end
 
 function (dimres::DimensionalityReduction)(data)
     card = dimres.card
-    inputs_call = extract_call(card, :inputs)
-    method_call = extract_call(card, :method)
-    name = extract_positional(card, :outputs)
+    inputs_call = extract_call(card.inputs)
+    method_call = extract_call(card.method)
+    name = extract_positional(card.outputs)
 
     cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
     X = reduce(vcat, transpose.(cols))
