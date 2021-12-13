@@ -6,7 +6,7 @@ end
 function columns_out(step::DimensionalityReduction)
     card = step.card
     isempty(columns_in(card)) && return Symbol[]
-    name = extract_positional(card.outputs)
+    name = extract_positional_argument(card.outputs)
     method_call = extract_call(card.method)
     dims = 0
     for (k, v) in method_call.named
@@ -73,14 +73,13 @@ end
 
 function (dimres::DimensionalityReduction)(data)
     card = dimres.card
-    inputs_call = extract_call(card.inputs)
-    method_call = extract_call(card.method)
-    name = extract_positional(card.outputs)
+    args, kwargs = extract_all_arguments(card.inputs)
+    name = extract_positional_argument(card.outputs)
 
-    cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
+    cols = Tables.getcolumn.(Ref(data), Symbol.(args))
     X = reduce(vcat, transpose.(cols))
-    options = Pair{Symbol, Any}[Symbol(k) => Tables.getcolumn(data, Symbol(v)) for (k, v) in inputs_call.named]
-    for (k, v) in method_call.named
+    options = Pair{Symbol, Any}[Symbol(k) => Tables.getcolumn(data, Symbol(v)) for (k, v) in kwargs]
+    for (k, v) in extract_named_arguments(card.method)
         if k == "dims"
             push!(options, :dims => parse(Int, v))
         else
@@ -88,7 +87,8 @@ function (dimres::DimensionalityReduction)(data)
         end
     end
 
-    an = dimensionalityreductions[Symbol(only(method_call.fs))]
+    f = extract_function(card.method)
+    an = dimensionalityreductions[Symbol(f)]
     projected_data = project(an, X; options...)
     rows = eachrow(projected_data)
     return SimpleTable(

@@ -39,10 +39,8 @@ end
 
 function (wc::Wildcard)(data)
     card = wc.card
-    inputs_call = extract_call(card.inputs)
-    inputs = Symbol.(inputs_call.positional)
-    outputs_call = extract_call(card.outputs)
-    outputs = Symbol.(outputs_call.positional)
+    inputs = Symbol.(extract_positional_arguments(card.inputs))
+    outputs = Symbol.(extract_positional_arguments(card.outputs))
 
     private_module = Module()
     for m in map(Symbol, WILDCARD_MODULES)

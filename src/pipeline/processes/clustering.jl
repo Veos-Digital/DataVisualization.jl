@@ -35,20 +35,19 @@ end
 
 function (cluster::Cluster)(data)
     card = cluster.card
-    inputs_call = extract_call(card.inputs)
-    method_call = extract_call(card.method)
-    name = extract_positional(card.outputs)
+    args, kwargs = extract_all_arguments(card.inputs)
+    name = extract_positional_argument(card.outputs)
 
     dist = Euclidean() # TODO: make configurable
-    cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
+    cols = Tables.getcolumn.(Ref(data), Symbol.(args))
     X = reduce(vcat, transpose.(cols))
-    kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(data, Symbol(v)), inputs_call.named)
     D = pairwise(dist, X, dims=2)
 
-    an = clusterings[Symbol(only(method_call.fs))]
+    f = extract_function(card.method)
+    an = clusterings[Symbol(f)]
     input = an === kmeans ? X : D
-    positional, named = [], collect(Pair, kws)
-    for (k, v) in method_call.named
+    positional, named = [], Pair{Symbol, Any}[Symbol(k) => Tables.getcolumn(data, Symbol(v)) for (k, v) in kwargs]
+    for (k, v) in extract_named_arguments(card.method)
         if an === kmeans && k == "classes"
             push!(positional, parse(Int, v))
         else

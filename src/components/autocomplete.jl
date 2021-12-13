@@ -113,16 +113,32 @@ function extract_call(rtf::RichTextField)
     return first(calls) 
 end
 
-function extract_positional(rtf::RichTextField)
+function extract_positional_argument(rtf::RichTextField)
     positionals = extract_call(rtf).positional
     length(positionals) == 1 || throw(ArgumentError("Field $(rtf.name) must have a unique positional argument"))
     return first(positionals)
 end
 
-function extract_positionals(rtf::RichTextField, n::Int)
-    positionals = extract_call(rtf).positional
+extract_positional_arguments(rtf::RichTextField) = extract_call(rtf).positional
+
+function extract_positional_arguments(rtf::RichTextField, n::Int)
+    positionals = extract_positional_arguments(rtf)
     length(positionals) == n || throw(ArgumentError("Field $(rtf.name) must have exactly $n positional arguments"))
     return positionals
+end
+
+extract_named_arguments(rtf::RichTextField) = extract_call(rtf).named
+
+function extract_all_arguments(rtf::RichTextField)
+    positional = extract_positional_arguments(rtf)
+    named = extract_named_arguments(rtf)
+    return positional, named
+end
+
+function extract_function(rtf::RichTextField)
+    fs = extract_call(rtf).fs
+    length(fs) == 1 || throw(ArgumentError("Field $(rtf.name) must have exactly a unique function"))
+    return first(fs)
 end
 
 function jsrender(session::Session, rtf::RichTextField)
