@@ -1,5 +1,5 @@
-struct Cluster{T} <: AbstractProcessingStep{T}
-    table::Observable{T}
+struct Cluster <: AbstractProcessingStep
+    table::Observable{SimpleTable}
     card::ProcessingCard
 end
 
@@ -10,7 +10,7 @@ const clusterings = (
     affinityprop=affinityprop,
 )
 
-function Cluster(table::Observable{T}) where {T}
+function Cluster(table::Observable{SimpleTable})
     analysis_names = collect(map(string, keys(clusterings)))
 
     analysis_options = vecmap(analysis_names) do name
@@ -35,22 +35,19 @@ end
 
 function (cluster::Cluster)(data)
     card = cluster.card
-    inputs_call = only(card.inputs.parsed)
-    method_call = only(card.method.parsed)
-    outputs_call = only(card.outputs.parsed)
-    name = only(outputs_call.positional)
+    args, kwargs = extract_all_arguments(card.inputs)
+    name = extract_positional_argument(card.outputs)
 
     dist = Euclidean() # TODO: make configurable
-    cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
+    cols = Tables.getcolumn.(Ref(data), Symbol.(args))
     X = reduce(vcat, transpose.(cols))
-    kws = map(((k, v),) -> Symbol(k) => Tables.getcolumn(data, Symbol(v)), inputs_call.named)
     D = pairwise(dist, X, dims=2)
-    name = only(outputs_call.positional)
 
-    an = clusterings[Symbol(only(method_call.fs))]
+    f = extract_function(card.method)
+    an = clusterings[Symbol(f)]
     input = an === kmeans ? X : D
-    positional, named = [], collect(Pair, kws)
-    for (k, v) in method_call.named
+    positional, named = [], Pair{Symbol, Any}[Symbol(k) => Tables.getcolumn(data, Symbol(v)) for (k, v) in kwargs]
+    for (k, v) in extract_named_arguments(card.method)
         if an === kmeans && k == "classes"
             push!(positional, parse(Int, v))
         else
@@ -58,5 +55,5 @@ function (cluster::Cluster)(data)
         end
     end
     anres = an(input, positional...; named...)
-    return LittleDict(Symbol(name) => map(nonnumeric, Clustering.assignments(anres)))
+    return SimpleTable(Symbol(name) => map(nonnumeric, Clustering.assignments(anres)))
 end

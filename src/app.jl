@@ -39,7 +39,7 @@ allowes filtering both before and after processing the data.
 Possible values are `:Spreadsheet`, `Chart` and `:Pipelines`.
 """
 function UI(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
-    obs = Observable(to_littledict(table))
+    obs = Observable(SimpleTable(table))
     pipelines = concatenate(PIPELINE_TABS, pipelinetabs, obs)
     visualizations = Dict{String, Vector}("keys" => String[], "values" => Any[])
     for entry in visualizationtabs

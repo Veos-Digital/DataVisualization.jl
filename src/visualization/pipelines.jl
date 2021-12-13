@@ -1,4 +1,4 @@
-struct Pipelines
+struct Pipelines <: AbstractVisualization
     pipelines::AbstractVector
 end
 

@@ -264,7 +264,7 @@ uuid = "e2d170a0-9d28-54be-80f0-106bbe20a464"
 version = "1.0.0"
 
 [[deps.DataVisualization]]
-deps = ["AlgebraOfGraphics", "CSV", "Clustering", "Distances", "GLM", "GraphMakie", "Graphs", "JSServe", "LayeredLayouts", "Makie", "Missings", "MultivariateStats", "Observables", "OrderedCollections", "RelocatableFolders", "Sockets", "Statistics", "StatsBase", "StatsModels", "StructArrays", "Tables", "WGLMakie"]
+deps = ["AlgebraOfGraphics", "CSV", "Clustering", "Distances", "GLM", "GraphMakie", "Graphs", "JSServe", "LayeredLayouts", "Makie", "Missings", "MultivariateStats", "Observables", "REPL", "RelocatableFolders", "Sockets", "Statistics", "StatsBase", "StatsModels", "StructArrays", "Tables", "WGLMakie"]
 path = ".."
 uuid = "de49ba16-8f50-42c0-953a-2dd264fb1ae7"
 version = "0.1.0"

@@ -1,7 +1,7 @@
-struct Filter{T} <: AbstractPipeline{T}
-    table::Observable{T}
+struct Filter <: AbstractPipeline
+    table::Observable{SimpleTable}
     filters::Observable{Filters}
-    value::Observable{T}
+    value::Observable{SimpleTable}
 end
 
 function get_vertices(f::Filter)
@@ -16,12 +16,12 @@ function get_vertices(f::Filter)
     end
 end
 
-get_vertex_names(f::Filter) = [:Filter]
+get_vertex_names(::Filter) = [:Filter]
 
-function Filter(table::Observable{T}) where {T}
+function Filter(table::Observable{SimpleTable})
     filters = Observable(Filters(table[]))
-    value = Observable{T}(selected_data(filters[], table[]))
-    return Filter{T}(table, filters, value)
+    value = Observable(selected_data(filters[], table[]))
+    return Filter(table, filters, value)
 end
 
 selected_data(f::Filter) = selected_data(f.filters[], f.table[])

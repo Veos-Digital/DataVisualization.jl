@@ -1,5 +1,5 @@
-struct LinearModel{T} <: AbstractProcessingStep{T}
-    table::Observable{T}
+struct LinearModel <: AbstractProcessingStep
+    table::Observable{SimpleTable}
     card::ProcessingCard
 end
 
@@ -33,7 +33,7 @@ function combinations(v::AbstractVector{T}) where {T}
 end
 
 # FIXME: remove `+` on first term
-function LinearModel(table::Observable)
+function LinearModel(table::Observable{SimpleTable})
 
     method_options = [
         "noise" => vecmap(string, keys(noises)),
@@ -55,27 +55,26 @@ end
 
 function (lm::LinearModel)(data)
     card = lm.card
-    inputs_calls = card.inputs.parsed
-    target_call = only(card.target.parsed)
-    method_call = only(card.method.parsed)
-    outputs_call = only(card.outputs.parsed)
 
     predictors = ConstantTerm(1)
-    for call in inputs_calls
+    for call in card.inputs.parsed
         predictors += combinations(map(Symbol, call.positional))
     end
-    responsevariable = Symbol(only(target_call.positional))
+    responsevariable = Symbol(extract_positional_argument(card.target))
 
     response = Term(responsevariable)
     formula = response ~ predictors
 
-    pred_name, err_name = outputs_call.positional
+    pred_name, err_name = extract_positional_arguments(card.outputs, 2)
     distribution, link = Normal(), nothing
-    for (k, v) in method_call.named
+    for (k, v) in extract_named_arguments(card.method)
         k == "noise" && (distribution = noises[Symbol(v)]())
         k == "link" && (link = links[Symbol(v)]())
     end
     model = glm(formula, data, distribution, something(link, canonicallink(distribution)))
     anres = disallowmissing(predict(model, data)) # FIXME: support missing data in AoG
-    return LittleDict(Symbol(pred_name) => anres, Symbol(err_name) => data[responsevariable] - anres)
+    return SimpleTable(
+        Symbol(pred_name) => anres,
+        Symbol(err_name) => Tables.getcolumn(data, responsevariable) - anres
+    )
 end

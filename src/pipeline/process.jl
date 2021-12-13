@@ -5,17 +5,17 @@ const PROCESSING_STEPS = (
     Wildcard = Wildcard,
 )
 
-struct Process{T} <: AbstractPipeline{T}
-    table::Observable{T}
+struct Process <: AbstractPipeline
+    table::Observable{SimpleTable}
     list::EditableList
-    value::Observable{T}
+    value::Observable{SimpleTable}
     options::Vector{Symbol}
 end
 
 get_vertices(p::Process) = Vertex.(p.list.steps[])
 get_vertex_names(p::Process) = p.options
 
-function Process(table::Observable{T}, options::Vector{Symbol}) where {T}
+function Process(table::Observable{SimpleTable}, options::Vector{Symbol})
     value = Observable(table[])
     steps = Observable(Any[])
     function thunkify(type)
@@ -57,7 +57,7 @@ function Process(table::Observable{T}, options::Vector{Symbol}) where {T}
     return process
 end
 
-function Process(table::Observable{T}; options=[:Predict, :Cluster, :Project]) where {T}
+function Process(table::Observable{SimpleTable}; options=[:Predict, :Cluster, :Project])
     return Process(table, vecmap(Symbol, options))
 end
 
@@ -94,20 +94,19 @@ compute_pipeline(input, cache, steps) = compute_pipeline(default_needs_update, i
 
 function compute_pipeline(f, input, cache, steps)
     nodes =  nodes_to_compute(f, steps)
-    result = to_littledict(input)
+    result = SimpleTable(input)
+    # Add outputs of nodes that do not need to be recomputed
     for node in setdiff(1:length(steps), nodes)
-        for key in columns_out(steps[node])
-            haskey(result, key) && throw(ArgumentError("Overwriting table is not allowed"))
-            result[key] = cache[key]
-        end
+        names = columns_out(steps[node])
+        columns = AbstractVector[Tables.getcolumn(cache, name) for name in names]
+        mergedisjointcols!(result, SimpleTable(names, columns))
     end
+    # Recompute nodes, which were returned in topological order
     for node in nodes
         step = steps[node]
         if !isempty(columns_in(step))
             try
-                mergewith!(result, step(result)) do _, _
-                    throw(ArgumentError("Overwriting table is not allowed"))
-                end
+                mergedisjointcols!(result, step(result))
                 step.card.state[] = done
             catch e
                 step.card.error[] = sprint(showerror, e)

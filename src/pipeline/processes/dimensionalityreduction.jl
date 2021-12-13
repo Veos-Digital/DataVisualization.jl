@@ -1,19 +1,20 @@
-struct DimensionalityReduction{T} <: AbstractProcessingStep{T}
-    table::Observable{T}
+struct DimensionalityReduction <: AbstractProcessingStep
+    table::Observable{SimpleTable}
     card::ProcessingCard
 end
 
 function columns_out(step::DimensionalityReduction)
     card = step.card
-    output_names = columns_out(card)
-    isempty(output_names) && return Symbol[]
-    basename = only(output_names)
-    method_call = only(card.method.parsed)
-    dims = nothing
-    for (k, v) in method_call.named
-        k == "dims" && (dims = parse(Int, v))
+    isempty(columns_in(card)) && return Symbol[]
+    name = extract_positional_argument(card.outputs; strict=false)
+    kwargs = extract_named_arguments(card.method; strict=false)
+    dims = 0
+    if all(!isnothing, (name, kwargs))
+        for (k, v) in kwargs
+            k == "dims" && (dims = parse(Int, v))
+        end
     end
-    return isnothing(dims) ? Symbol[] : [Symbol(basename, "_", i) for i in 1:dims]
+    return Symbol.(name, '_', 1:dims)
 end
 
 # Add custom type to represent multi-dimensional scaling
@@ -51,7 +52,7 @@ const dimensionalityreductions = (
     mds=MDS,
 )
 
-function DimensionalityReduction(table::Observable)
+function DimensionalityReduction(table::Observable{SimpleTable})
 
     analysis_names = collect(map(string, keys(dimensionalityreductions)))
 
@@ -74,15 +75,13 @@ end
 
 function (dimres::DimensionalityReduction)(data)
     card = dimres.card
-    inputs_call = only(card.inputs.parsed)
-    method_call = only(card.method.parsed)
-    outputs_call = only(card.outputs.parsed)
-    name = only(outputs_call.positional)
+    args, kwargs = extract_all_arguments(card.inputs)
+    name = extract_positional_argument(card.outputs)
 
-    cols = Tables.getcolumn.(Ref(data), Symbol.(inputs_call.positional))
+    cols = Tables.getcolumn.(Ref(data), Symbol.(args))
     X = reduce(vcat, transpose.(cols))
-    options = Pair{Symbol, Any}[Symbol(k) => Tables.getcolumn(data, Symbol(v)) for (k, v) in inputs_call.named]
-    for (k, v) in method_call.named
+    options = Pair{Symbol, Any}[Symbol(k) => Tables.getcolumn(data, Symbol(v)) for (k, v) in kwargs]
+    for (k, v) in extract_named_arguments(card.method)
         if k == "dims"
             push!(options, :dims => parse(Int, v))
         else
@@ -90,8 +89,12 @@ function (dimres::DimensionalityReduction)(data)
         end
     end
 
-    an = dimensionalityreductions[Symbol(only(method_call.fs))]
+    f = extract_function(card.method)
+    an = dimensionalityreductions[Symbol(f)]
     projected_data = project(an, X; options...)
     rows = eachrow(projected_data)
-    return LittleDict(Symbol(name, '_', i) => row for (i, row) in enumerate(rows))
+    return SimpleTable(
+        Symbol.(name, '_', eachindex(rows)),
+        collect(AbstractVector, rows)
+    )
 end

@@ -1,5 +1,5 @@
-struct Wildcard{T} <: AbstractProcessingStep{T}
-    table::Observable{T}
+struct Wildcard <: AbstractProcessingStep
+    table::Observable{SimpleTable}
     card::ProcessingCard
 end
 
@@ -14,7 +14,7 @@ end
 
 const WILDCARD_MODULES = (Base, Statistics, StatsBase) # TODO: consider adding more modules
 
-function Wildcard(table::Observable)
+function Wildcard(table::Observable{SimpleTable})
     inputs = RichTextField("Inputs", data_options(table, keywords=[""]), "")
     outputs = RichTextField("Outputs", data_options(table, keywords=[""], suffix="_new"), "")
     input_suggestions = lift(tryarguments, inputs.widget.value)
@@ -39,10 +39,8 @@ end
 
 function (wc::Wildcard)(data)
     card = wc.card
-    inputs_call = only(card.inputs.parsed)
-    inputs = Symbol.(inputs_call.positional)
-    outputs_call = only(card.outputs.parsed)
-    outputs = Symbol.(outputs_call.positional)
+    inputs = Symbol.(extract_positional_arguments(card.inputs))
+    outputs = Symbol.(extract_positional_arguments(card.outputs))
 
     private_module = Module()
     for m in map(Symbol, WILDCARD_MODULES)
@@ -58,5 +56,8 @@ function (wc::Wildcard)(data)
         end
     """)
     @eval private_module $expr
-    return LittleDict(output => getproperty(private_module, output) for output in outputs)
+    return SimpleTable(
+        outputs,
+        getproperty.(Ref(private_module), outputs)
+    )
 end
