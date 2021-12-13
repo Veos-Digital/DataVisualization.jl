@@ -6,11 +6,13 @@ end
 function columns_out(step::DimensionalityReduction)
     card = step.card
     isempty(columns_in(card)) && return Symbol[]
-    name = extract_positional_argument(card.outputs)
-    method_call = extract_call(card.method)
+    name = extract_positional_argument(card.outputs; strict=false)
+    kwargs = extract_named_arguments(card.method; strict=false)
     dims = 0
-    for (k, v) in method_call.named
-        k == "dims" && (dims = parse(Int, v))
+    if all(!isnothing, (name, kwargs))
+        for (k, v) in kwargs
+            k == "dims" && (dims = parse(Int, v))
+        end
     end
     return Symbol.(name, '_', 1:dims)
 end

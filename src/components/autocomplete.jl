@@ -107,37 +107,39 @@ function reset!(rtf::RichTextField)
     parse!(rtf)
 end
 
-function extract_call(rtf::RichTextField)
+maybethrow(e::Exception; strict) = strict ? throw(e) : nothing
+
+function extract_call(rtf::RichTextField; strict=true)
     calls = rtf.parsed
-    length(calls) == 1 || throw(ArgumentError("Field $(rtf.name) must have a unique addend"))
+    length(calls) == 1 || maybethrow(ArgumentError("Field $(rtf.name) must have a unique addend"); strict)
     return first(calls) 
 end
 
-function extract_positional_argument(rtf::RichTextField)
-    positionals = extract_call(rtf).positional
-    length(positionals) == 1 || throw(ArgumentError("Field $(rtf.name) must have a unique positional argument"))
+function extract_positional_argument(rtf::RichTextField; strict=true)
+    positionals = extract_call(rtf; strict).positional
+    length(positionals) == 1 || maybethrow(ArgumentError("Field $(rtf.name) must have a unique positional argument"); strict)
     return first(positionals)
 end
 
-extract_positional_arguments(rtf::RichTextField) = extract_call(rtf).positional
+extract_positional_arguments(rtf::RichTextField; strict=true) = extract_call(rtf; strict).positional
 
-function extract_positional_arguments(rtf::RichTextField, n::Int)
-    positionals = extract_positional_arguments(rtf)
-    length(positionals) == n || throw(ArgumentError("Field $(rtf.name) must have exactly $n positional arguments"))
+function extract_positional_arguments(rtf::RichTextField, n::Int; strict=true)
+    positionals = extract_positional_arguments(rtf; strict)
+    length(positionals) == n || maybethrow(ArgumentError("Field $(rtf.name) must have exactly $n positional arguments"); strict)
     return positionals
 end
 
-extract_named_arguments(rtf::RichTextField) = extract_call(rtf).named
+extract_named_arguments(rtf::RichTextField; strict=true) = extract_call(rtf; strict).named
 
-function extract_all_arguments(rtf::RichTextField)
-    positional = extract_positional_arguments(rtf)
-    named = extract_named_arguments(rtf)
+function extract_all_arguments(rtf::RichTextField; strict=true)
+    positional = extract_positional_arguments(rtf; strict)
+    named = extract_named_arguments(rtf; strict)
     return positional, named
 end
 
-function extract_function(rtf::RichTextField)
-    fs = extract_call(rtf).fs
-    length(fs) == 1 || throw(ArgumentError("Field $(rtf.name) must have exactly a unique function"))
+function extract_function(rtf::RichTextField; strict=true)
+    fs = extract_call(rtf; strict).fs
+    length(fs) == 1 || maybethrow(ArgumentError("Field $(rtf.name) must have a unique function"); strict)
     return first(fs)
 end
 
