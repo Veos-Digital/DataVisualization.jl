@@ -1,6 +1,9 @@
 const SimpleList = Vector{Any}
 const SimpleDict = Dict{String, Any}
 
+getkey(s::SimpleDict) = s["key"]
+getvalue(s::SimpleDict) = s["value"]
+
 # This simple table type is the preferred way to store tables
 struct SimpleTable
     names::Vector{Symbol}

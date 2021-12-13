@@ -1,12 +1,14 @@
 struct Tabs
-    options::Dict{String, Vector}
+    options::SimpleList
     activetab::Observable{Int}
 end
 
-Tabs(options::Dict{String, Vector}) = Tabs(options, Observable(1))
+Tabs(options::SimpleList) = Tabs(options, Observable(1))
 function Tabs(nt::Union{AbstractDict, NamedTuple}, activetab=Observable(1))
-    options = Dict("keys" => collect(keys(nt)), "values" => collect(values(nt)))
-    return Tabs(options, activetab)
+    options = Iterators.map(pairs(nt)) do (k, v)
+        return SimpleDict("key" => k, "value" => v)
+    end
+    return Tabs(collect(Any, options), activetab)
 end
 
 function jsrender(session::Session, tabs::Tabs)
@@ -17,8 +19,8 @@ function jsrender(session::Session, tabs::Tabs)
     nodes = [DOM.li(
         class="text-blue-800 text-2xl font-semibold rounded mr-4 px-4 py-2 cursor-pointer hover:bg-gray-200",
         onclick=js"JSServe.update_obs($activetab, $i)",
-        key
-    ) for (i, key) in enumerate(options["keys"])]
+        getkey(option)
+    ) for (i, option) in enumerate(options)]
     headers = DOM.ul(class="flex mb-12", nodes)
 
     onjs(session, activetab, js"""
@@ -28,9 +30,9 @@ function jsrender(session::Session, tabs::Tabs)
     """)
     activetab[] = activetab[]
 
-    contents = map(enumerate(options["values"])) do (i, value)
+    contents = map(enumerate(options)) do (i, option)
         display = activetab[] == i ? "block" : "none"
-        content = DOM.div(style="display: $display;", value)
+        content = DOM.div(style="display: $display;", getvalue(option))
         onjs(
             session,
             activetab,

@@ -34,12 +34,14 @@ function jsrender(session::Session, add::AddNewCard)
     return jsrender(session, ui)
 end
 
+struct MoveSelected end
+const moveselected = MoveSelected()
+
 struct EditableList
-    keys::Observable{Vector{String}}
-    options::Observable{Dict{String, Vector}}
-    steps::Observable{Vector{Any}}
+    options::Observable{SimpleList}
+    steps::Observable{SimpleList}
     selected::Observable{Vector{String}}
-    list::Observable{Vector{Any}}
+    list::Observable{SimpleList}
 end
 
 function get_addnewcard_index(list::Vector, add::AddNewCard)
@@ -65,9 +67,9 @@ function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
             el.steps[] = move_item(_steps, step_index => addnewcard_index - (addnewcard_index > step_index))
         else
             options = el.options[]
-            idx = findfirst(==(val), options["keys"])
+            idx = findfirst(==(val)∘getkey, options)
             isnothing(idx) && return
-            thunk = options["values"][idx]
+            thunk = getvalue(option[idx])
             el.steps[] = insert_item(_steps, addnewcard_index, thunk())
         end
     end
@@ -76,9 +78,9 @@ end
 
 function EditableList(options::Observable, steps::Observable)
     selected = Observable(String[])
-    keys = lift(o -> vcat("Move Selected", o["keys"]), options)
-    list = Observable{Vector{Any}}()
-    el = EditableList(keys, options, steps, selected, list)
+    keys = @lift getkey.($options)
+    list = Observable{SimpleList}()
+    el = EditableList(options, steps, selected, list)
     map!(list, steps) do steps
         elements = Any[]
         push!(elements, AddNewCard(keys, el))

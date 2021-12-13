@@ -39,12 +39,12 @@ function Process(table::Observable{SimpleTable}, options::Vector{Symbol})
             return step
         end
     end
-    list_options = Observable(
-        Dict(
-            "keys" => string.(options),
-            "values" => thunkify.(getindex.(Ref(PROCESSING_STEPS), options)),
-        )
-    )
+    _list_options = Iterators.map(options) do option
+        local key = string(option)
+        local value = thunkify(PROCESSING_STEPS[option])
+        return SimpleDict("key" => key, "value" => value)
+    end
+    list_options = Observable(collect(Any, _list_options))
     process = Process(table, EditableList(list_options, steps), value, options)
     on(table) do data
         _steps = steps[]

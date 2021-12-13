@@ -1,5 +1,5 @@
 Base.@kwdef struct List
-    entries::Observable{Dict{String, Vector{String}}}
+    entries::Observable{SimpleList}
     value::Observable{String}
     selected::Observable{Union{Int, Nothing}}=Observable{Union{Int, Nothing}}(nothing) # 0-based indexing
     hidden::Observable{Bool}=Observable(true)
@@ -11,12 +11,12 @@ function List(keys::Observable{Vector{String}}, value::Observable{String}; kwarg
     return List(; entries, value, kwargs...)
 end
 
-function List(entries::Observable{Dict{String, Vector{String}}}, value::Observable{String}; kwargs...)
+function List(entries::Observable{SimpleList}, value::Observable{String}; kwargs...)
     return List(; entries, value, kwargs...)
 end
 
 function to_entries(keys::AbstractVector{<:AbstractString})
-    return Dict("keys" => collect(String, keys), "values" => collect(String, keys))
+    return Any[SimpleDict("key" => String(key), "value" => String(key)) for key in keys]
 end
 
 function jsrender(session::Session, l::List)
@@ -36,7 +36,8 @@ function jsrender(session::Session, l::List)
 
     onjs(session, l.entries, js"""
         function (entries) {
-            const {keys, values} = entries;
+            const keys = entries.map(e => e.key);
+            const values = entries.map(e => e.value);
             const list = $(list);
             const classes = $(itemClasses);
             while (list.childNodes.length > keys.length) {
