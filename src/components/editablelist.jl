@@ -54,24 +54,28 @@ function get_step_indices(steps::Vector, selected::Vector{String})
     return filter(!isnothing, indexin(selected, ids))
 end
 
+handlethunk(thunk, el::EditableList, addnewcard_index) = insert_item(el.steps[], addnewcard_index, thunk())
+
+function handlethunk(::MoveSelected, el::EditableList, addnewcard_index)
+    _steps = el.steps[]
+    step_indices = get_step_indices(_steps, el.selected[])
+    isempty(step_indices) && return nothing
+    step_index = first(step_indices)
+    return move_item(_steps, step_index => addnewcard_index - (addnewcard_index > step_index))
+end
+
 function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
     add = AddNewCard(keys)
     on(add.value) do val
         isempty(val) && return
         addnewcard_index = get_addnewcard_index(el.list[], add)
-        _steps = el.steps[]
-        step_indices = get_step_indices(_steps, el.selected[])
-        if val == "Move Selected"
-            isempty(step_indices) && return
-            step_index = first(step_indices)
-            el.steps[] = move_item(_steps, step_index => addnewcard_index - (addnewcard_index > step_index))
-        else
-            options = el.options[]
-            idx = findfirst(==(val)∘getkey, options)
-            isnothing(idx) && return
-            thunk = getvalue(option[idx])
-            el.steps[] = insert_item(_steps, addnewcard_index, thunk())
-        end
+        options = el.options[]
+        idx = findfirst(==(val)∘getkey, options)
+        isnothing(idx) && return
+        thunk = getvalue(options[idx])
+        newcards = handlethunk(thunk, el, addnewcard_index)
+        isnothing(newcards) && return
+        el.steps[] = newcards
     end
     return add
 end
