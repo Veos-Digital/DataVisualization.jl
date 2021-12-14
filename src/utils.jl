@@ -30,15 +30,15 @@ function indexoftype(::Type{T}, list, el) where {T}
     idx = 0
     for x in list
         idx += x isa T
-        isequal(x, el) && break
+        isequal(x, el) && return idx
     end
-    return idx
+    return nothing
 end
 
 macro maybereturn(x)
     expr = quote
         local tmp = $(esc(x))
-        isnothing(tmp) && return
+        isnothing(tmp) && return nothing
         tmp
     end
     return expr

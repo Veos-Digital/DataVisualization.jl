@@ -61,8 +61,8 @@ end
 function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
     add = AddNewCard(keys)
     on(add.value) do key
-        idx = indexoftype(AddNewCard, el.list[], add) 
         thunk = @maybereturn getatkey(el.options[], key)
+        idx = @maybereturn indexoftype(AddNewCard, el.list[], add) 
         steps = @maybereturn updatecards(el, idx, thunk())
         el.steps[] = steps
     end
