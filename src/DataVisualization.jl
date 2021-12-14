@@ -30,7 +30,7 @@ using Clustering
 using GLM, StatsModels
 using Missings: disallowmissing
 
-import RelocatableFolders: @path
+using RelocatableFolders: @path
 
 export UI
 export set_aog_theme!, update_theme!
