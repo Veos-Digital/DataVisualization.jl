@@ -34,17 +34,13 @@ function jsrender(session::Session, add::AddNewCard)
     return jsrender(session, ui)
 end
 
-struct EditableList
-    keys::Observable{Vector{String}}
-    options::Observable{Dict{String, Vector}}
-    steps::Observable{Vector{Any}}
-    selected::Observable{Vector{String}}
-    list::Observable{Vector{Any}}
-end
+struct MoveSelected end
 
-function get_addnewcard_index(list::Vector, add::AddNewCard)
-    idx = findfirst(==(add), list)
-    return count(x -> x isa AddNewCard, view(list, 1:idx))
+struct EditableList
+    options::Observable{SimpleList}
+    steps::Observable{SimpleList}
+    selected::Observable{Vector{String}}
+    list::Observable{SimpleList}
 end
 
 function get_step_indices(steps::Vector, selected::Vector{String})
@@ -52,33 +48,32 @@ function get_step_indices(steps::Vector, selected::Vector{String})
     return filter(!isnothing, indexin(selected, ids))
 end
 
+updatecards(el::EditableList, idx, card) = insert_item(el.steps[], idx, card)
+
+function updatecards(el::EditableList, idx, ::MoveSelected)
+    _steps, _selected = el.steps[], el.selected[]
+    selected_idx = @maybereturn findfirst(_steps) do step
+        return string(objectid(step.card)) in _selected
+    end
+    return move_item(_steps, selected_idx => idx - (idx > selected_idx))
+end
+
 function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
     add = AddNewCard(keys)
-    on(add.value) do val
-        isempty(val) && return
-        addnewcard_index = get_addnewcard_index(el.list[], add)
-        _steps = el.steps[]
-        step_indices = get_step_indices(_steps, el.selected[])
-        if val == "Move Selected"
-            isempty(step_indices) && return
-            step_index = first(step_indices)
-            el.steps[] = move_item(_steps, step_index => addnewcard_index - (addnewcard_index > step_index))
-        else
-            options = el.options[]
-            idx = findfirst(==(val), options["keys"])
-            isnothing(idx) && return
-            thunk = options["values"][idx]
-            el.steps[] = insert_item(_steps, addnewcard_index, thunk())
-        end
+    on(add.value) do key
+        thunk = @maybereturn getatkey(el.options[], key)
+        idx = @maybereturn indexoftype(AddNewCard, el.list[], add) 
+        steps = @maybereturn updatecards(el, idx, thunk())
+        el.steps[] = steps
     end
     return add
 end
 
 function EditableList(options::Observable, steps::Observable)
     selected = Observable(String[])
-    keys = lift(o -> vcat("Move Selected", o["keys"]), options)
-    list = Observable{Vector{Any}}()
-    el = EditableList(keys, options, steps, selected, list)
+    keys = @lift getkey.($options)
+    list = Observable{SimpleList}()
+    el = EditableList(options, steps, selected, list)
     map!(list, steps) do steps
         elements = Any[]
         push!(elements, AddNewCard(keys, el))

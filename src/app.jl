@@ -2,12 +2,12 @@ const PIPELINE_TABS = (; Load, Filter, Process)
 const VISUALIZATION_TABS = (; Spreadsheet, Chart, Pipelines)
 
 struct UI
-    pipelinetabs::Dict{String, Vector}
-    visualizationtabs::Dict{String, Vector}
+    pipelinetabs::SimpleList
+    visualizationtabs::SimpleList
 end
 
 function Base.show(io::IO, ui::UI)
-    p, v = ui.pipelinetabs["keys"], ui.visualizationtabs["keys"]
+    p, v = map(getkey, ui.pipelinetabs), map(getkey, ui.visualizationtabs)
     print(io, "UI with pipelines $(p) and visualizations $(v)")
 end
 
@@ -15,15 +15,14 @@ extract_options(sym::Union{Symbol, AbstractString}) = Symbol(sym), NamedTuple()
 extract_options((sym, kwargs)::Pair) = Symbol(sym), kwargs
 
 function concatenate(tabs, names, value)
-    keys, values = String[], Any[]
+    pipelines = Any[]
     for entry in names
         name, kwargs = extract_options(entry)
-        push!(keys, string(name))
         tab = tabs[name](value; kwargs...)
-        push!(values, tab)
+        push!(pipelines, SimpleDict("key" => string(name), "value" => tab))
         value = output(tab)
     end
-    return Dict("keys" => keys, "values" => values)
+    return pipelines
 end
 
 """
@@ -41,11 +40,14 @@ Possible values are `:Spreadsheet`, `Chart` and `:Pipelines`.
 function UI(table; pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
     obs = Observable(SimpleTable(table))
     pipelines = concatenate(PIPELINE_TABS, pipelinetabs, obs)
-    visualizations = Dict{String, Vector}("keys" => String[], "values" => Any[])
+    visualizations = Any[]
     for entry in visualizationtabs
         name, kwargs = extract_options(entry)
-        push!(visualizations["keys"], string(name))
-        push!(visualizations["values"], VISUALIZATION_TABS[name](pipelines["values"]; kwargs...))
+        visualization = SimpleDict(
+            "key" => string(name),
+            "value" => VISUALIZATION_TABS[name](getvalue.(pipelines); kwargs...)
+        )
+        push!(visualizations, visualization)
     end
     return UI(pipelines, visualizations)
 end

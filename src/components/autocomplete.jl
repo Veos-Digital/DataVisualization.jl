@@ -65,8 +65,11 @@ function jsrender(session::Session, wdg::Autocomplete)
             }
             const slice = value.slice(idx + 1, value.length)
             const keys = list.filter(text => text && text.toLowerCase().startsWith(slice.toLowerCase()));
-            const values = keys.map(key => value.slice(0, idx + 1) + key);
-            JSServe.update_obs($(wdg.list.entries), {keys, values});
+            const entries = keys.map(function (key) {
+                const completion = value.slice(0, idx + 1) + key;
+                return {key, value: completion};
+            });
+            JSServe.update_obs($(wdg.list.entries), entries);
         }
     """)
 

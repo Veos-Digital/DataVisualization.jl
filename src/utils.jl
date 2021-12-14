@@ -26,9 +26,23 @@ iscontinuous(v::AbstractVector) = false
 iscontinuous(v::AbstractVector{<:Number}) = true
 iscontinuous(v::AbstractVector{<:Bool}) = false
 
-# convert to dict with fields `"keys"` and `"values"`, as it is the simplest way to share
-# ordered associative containers with JavaScript
-to_stringdict(p) = Dict("keys" => [string(key) for key in keys(p)], "values" => collect(values(p)))
+function indexoftype(::Type{T}, list, el) where {T}
+    idx = 0
+    for x in list
+        idx += x isa T
+        isequal(x, el) && return idx
+    end
+    return nothing
+end
+
+macro maybereturn(x)
+    expr = quote
+        local tmp = $(esc(x))
+        isnothing(tmp) && return nothing
+        tmp
+    end
+    return expr
+end
 
 function buttonclass(positive)
     class = "text-xl font-semibold rounded text-left py-2 px-4 bg-opacity-75"
