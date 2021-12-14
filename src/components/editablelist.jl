@@ -35,7 +35,6 @@ function jsrender(session::Session, add::AddNewCard)
 end
 
 struct MoveSelected end
-const moveselected = MoveSelected()
 
 struct EditableList
     options::Observable{SimpleList}
@@ -44,38 +43,28 @@ struct EditableList
     list::Observable{SimpleList}
 end
 
-function get_addnewcard_index(list::Vector, add::AddNewCard)
-    idx = findfirst(==(add), list)
-    return count(x -> x isa AddNewCard, view(list, 1:idx))
-end
-
 function get_step_indices(steps::Vector, selected::Vector{String})
     ids = @. string(objectid(getproperty(steps, :card)))
     return filter(!isnothing, indexin(selected, ids))
 end
 
-handlethunk(thunk, el::EditableList, addnewcard_index) = insert_item(el.steps[], addnewcard_index, thunk())
+updatecards(el::EditableList, idx, card) = insert_item(el.steps[], idx, card)
 
-function handlethunk(::MoveSelected, el::EditableList, addnewcard_index)
-    _steps = el.steps[]
-    step_indices = get_step_indices(_steps, el.selected[])
-    isempty(step_indices) && return nothing
-    step_index = first(step_indices)
-    return move_item(_steps, step_index => addnewcard_index - (addnewcard_index > step_index))
+function updatecards(el::EditableList, idx, ::MoveSelected)
+    _steps, _selected = el.steps[], el.selected[]
+    selected_idx = @maybereturn findfirst(_steps) do step
+        return string(objectid(step.card)) in _selected
+    end
+    return move_item(_steps, selected_idx => idx - (idx > selected_idx))
 end
 
 function AddNewCard(keys::Observable{Vector{String}}, el::EditableList)
     add = AddNewCard(keys)
-    on(add.value) do val
-        isempty(val) && return
-        addnewcard_index = get_addnewcard_index(el.list[], add)
-        options = el.options[]
-        idx = findfirst(==(val)∘getkey, options)
-        isnothing(idx) && return
-        thunk = getvalue(options[idx])
-        newcards = handlethunk(thunk, el, addnewcard_index)
-        isnothing(newcards) && return
-        el.steps[] = newcards
+    on(add.value) do key
+        idx = indexoftype(AddNewCard, el.list[], add) 
+        thunk = @maybereturn getatkey(el.options[], key)
+        steps = @maybereturn updatecards(el, idx, thunk())
+        el.steps[] = steps
     end
     return add
 end

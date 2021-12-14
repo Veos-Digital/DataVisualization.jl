@@ -1,6 +1,11 @@
 const SimpleList = Vector{Any}
 const SimpleDict = Dict{String, Any}
 
+function getatkey(options::SimpleList, key)
+    idx = findfirst(isequal(key)∘getkey, options)
+    return isnothing(idx) ? nothing : getvalue(options[idx])
+end
+
 getkey(s::SimpleDict) = s["key"]
 getvalue(s::SimpleDict) = s["value"]
 

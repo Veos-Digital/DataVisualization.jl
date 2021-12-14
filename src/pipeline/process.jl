@@ -39,20 +39,18 @@ function Process(table::Observable{SimpleTable}, options::Vector{Symbol})
             return step
         end
     end
-    _list_options = Iterators.map(options) do option
-        local key = string(option)
-        local value = thunkify(PROCESSING_STEPS[option])
-        return SimpleDict("key" => key, "value" => value)
+    _list_options = Any[SimpleDict("key" => "Move Selected", "value" => MoveSelected)]
+    for option in options
+        option_dict = SimpleDict(
+            "key" => string(option),
+            "value" => thunkify(PROCESSING_STEPS[option])
+        )
+        push!(_list_options, option_dict)
     end
-    list_options = Observable(collect(Any, _list_options))
+    list_options = Observable(_list_options)
     process = Process(table, EditableList(list_options, steps), value, options)
     on(table) do data
-        _steps = steps[]
-        # TODO: contemplate error case
-        value[] = compute_pipeline(always_true, data, value[], _steps)
-        for step in _steps
-            step.card.state[] = done
-        end
+        value[] = compute_pipeline(always_true, data, value[], steps[])
     end
     return process
 end

@@ -26,6 +26,24 @@ iscontinuous(v::AbstractVector) = false
 iscontinuous(v::AbstractVector{<:Number}) = true
 iscontinuous(v::AbstractVector{<:Bool}) = false
 
+function indexoftype(::Type{T}, list, el) where {T}
+    idx = 0
+    for x in list
+        idx += x isa T
+        isequal(x, el) && break
+    end
+    return idx
+end
+
+macro maybereturn(x)
+    expr = quote
+        local tmp = $(esc(x))
+        isnothing(tmp) && return
+        tmp
+    end
+    return expr
+end
+
 function buttonclass(positive)
     class = "text-xl font-semibold rounded text-left py-2 px-4 bg-opacity-75"
     class *= positive ? " bg-blue-100 hover:bg-blue-200 text-blue-800 hover:text-blue-900 mr-8" :
