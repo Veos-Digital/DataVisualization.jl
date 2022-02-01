@@ -101,4 +101,32 @@ include("visualization/pipelines.jl")
 include("visualization/spreadsheet.jl")
 include("app.jl")
 
+# TODO: most of the configuration here should be given as settings via ARGS
+function julia_main()::Cint
+    # set theme
+    set_aog_theme!()
+    update_theme!(fontsize=24)
+
+    # initialize dummy dataset
+    df = (a=rand(10), b=rand(10), c=rand(["a", "b"], 10))
+
+    # settings for pipelines and visualizations
+    pipelinetabs = (
+        :Load,
+        :Filter,
+        :Process => (options=[:Predict, :Cluster, :Project],),
+    )
+
+    visualizationtabs = (:Spreadsheet, :Chart, :Pipelines)
+
+    # launch server
+    server = DataVisualization.serve(df; pipelinetabs, visualizationtabs,
+        url=Sockets.localhost, port=9000, verbose=true)
+
+    # prevent the app from closing once the server has been launched
+    wait()
+
+    return 0 # if things finished successfully
+end
+
 end
