@@ -33,5 +33,5 @@ julia> Pkg.add(url="https://github.com/JuliaPlots/GraphMakie.jl", rev="pv/bumpma
 
 julia> Pkg.add(url="https://github.com/JuliaPlots/Makie.jl", rev="master")
 
-julia> create_app(".", "AppFolder", include_lazy_artifacts=true)
+julia> create_app(".", "AppFolder", include_transitive_dependencies=false)
 ```
