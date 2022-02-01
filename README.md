@@ -9,3 +9,27 @@ Start julia with `julia --project=app` and include `app/main.jl` to start the in
 
 :warning: The settings in the `app/main.jl` file demo include a wild card, which is insecure on a server, as it can run arbitrary code.
 If you are serving the app publicly, do not include `:Wildcard` among the options.
+
+## Compilation
+
+DataVisualization.jl can be compiled to a stand-alone app as follows:
+
+```julia
+using PackageCompiler
+create_app("path/to/DataVisualization", "path/to/new/app/folder",
+    include_transitive_dependencies=false)
+```
+
+:warning: To work this requires the versions currently listed in the Manifest.toml file.
+
+For instance, provided PackageCompiler is installed in the global environment, one can navigate to the root folder of this repository and run
+
+```
+julia -q --project
+
+julia> using Pkg, PackageCompiler
+
+julia> Pkg.instantiate()
+
+julia> create_app(".", "AppFolder", include_transitive_dependencies=false)
+```

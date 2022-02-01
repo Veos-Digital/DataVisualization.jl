@@ -1,6 +1,6 @@
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
-/Manifest.toml
 dev/
 docs/build
+/AppFolder/
