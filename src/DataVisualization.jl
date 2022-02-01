@@ -114,7 +114,7 @@ function julia_main()::Cint
     pipelinetabs = (
         :Load,
         :Filter,
-        :Process => (options=[:Predict, :Cluster, :Project, :Wildcard],),
+        :Process => (options=[:Predict, :Cluster, :Project],),
     )
 
     visualizationtabs = (:Spreadsheet, :Chart, :Pipelines)
