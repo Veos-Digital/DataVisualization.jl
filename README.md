@@ -20,7 +20,7 @@ create_app("path/to/DataVisualization", "path/to/new/app/folder",
     include_transitive_dependencies=false)
 ```
 
-:warning: To work this requires the versions currently listed in the Manifest.toml file and julia 1.7 (exact version is listed in the Manifest.toml file).
+:warning: To work this requires checking out some specific branches of packages (should be resolved in the near future).
 
 For instance, provided PackageCompiler is installed in the global environment, one can navigate to the root folder of this repository and run
 
