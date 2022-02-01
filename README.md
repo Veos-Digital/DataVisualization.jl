@@ -29,7 +29,9 @@ julia -q --project
 
 julia> using Pkg, PackageCompiler
 
-julia> Pkg.instantiate()
+julia> Pkg.add(url="https://github.com/JuliaPlots/GraphMakie.jl", rev="pv/bumpmakie")
 
-julia> create_app(".", "AppFolder", include_transitive_dependencies=false)
+julia> Pkg.add(url="https://github.com/JuliaPlots/Makie.jl", rev="master")
+
+julia> create_app(".", "AppFolder", include_lazy_artifacts=true)
 ```
