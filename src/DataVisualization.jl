@@ -30,14 +30,20 @@ using Clustering
 using GLM, StatsModels
 using Missings: disallowmissing
 
-using RelocatableFolders: @path
+using RelocatableFolders: @path, RelocatableFolders
 
 export UI
 export set_aog_theme!, update_theme!
 
 WGLMakie.activate!()
 
-dependency_path(fn) = @path joinpath(dirname(@__DIR__), "js_dependencies", fn)
+function dependency_path(fn)
+    return if hasmethod(JSServe.Asset, Tuple{RelocatableFolders.Path})
+        @path joinpath(dirname(@__DIR__), "js_dependencies", fn)
+    else
+        joinpath(dirname(@__DIR__), "js_dependencies", fn)
+    end
+end
 
 const FormsCSS = JSServe.Asset(dependency_path("forms.min.css"))
 const TailwindCSS = JSServe.Asset(dependency_path("tailwind.min.css"))
