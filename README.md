@@ -5,7 +5,14 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://veos-digital.github.io/DataVisualization.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://veos-digital.github.io/DataVisualization.jl/dev)
 
-Start julia with `julia --project=app` and include `app/main.jl` to start the interface on `127.0.0.1:9000/`.
+Navigate at the root of this repository and start Julia with `julia --project=app`. Open the package repl with `]`, then type
+
+```
+(app) pkg> dev .; add JSServe@1.2.3;
+```
+
+Once everything has been installed
+ and include `app/main.jl` to start the interface on `127.0.0.1:9000/`.
 
 :warning: The settings in the `app/main.jl` file demo include a wild card, which is insecure on a server, as it can run arbitrary code.
 If you are serving the app publicly, do not include `:Wildcard` among the options.
