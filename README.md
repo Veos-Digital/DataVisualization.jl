@@ -11,8 +11,7 @@ Navigate at the root of this repository and start Julia with `julia --project=ap
 (app) pkg> dev .; add JSServe@1.2.3;
 ```
 
-Once everything has been installed
- and include `app/main.jl` to start the interface on `127.0.0.1:9000/`.
+Once everything has been installed, include `app/main.jl` to start the interface on `127.0.0.1:9000/`.
 
 :warning: The settings in the `app/main.jl` file demo include a wild card, which is insecure on a server, as it can run arbitrary code.
 If you are serving the app publicly, do not include `:Wildcard` among the options.
